@@ -1,4 +1,4 @@
-$('#send-button').on('click', function () {
+function sendMessage() {
   let message = $('#message-input').val();
   if (!message) {
     return;
@@ -20,19 +20,28 @@ $('#send-button').on('click', function () {
     </li>`);
   $('#chat-content ul').append(element);
   $('#message-input').val('');
-  hljs.initHighlightingOnLoad();
-});
+}
 
-$(document).ready(function () {
-  let messageList = $('#chat-content ul li div.chat-display-message');
-  for (const messageElement of messageList) {
-    let message = $(messageElement).html()
-      .replace(/&quot;/g, '"')
-      .replace(/&#96;/g, '`')
-      .replace(/&#36;/g, '$')
-      .replace(/&lt;/g, '<');
-    $(messageElement).html(marked.parse(message));
-  }
-  hljs.initHighlightingOnLoad();
-});
+function init() {
+  $('#send-button').on('click', sendMessage);
+  $(document).ready(function () {
+    let messageList = $('#chat-content ul li div.chat-display-message');
+    for (const messageElement of messageList) {
+      let message = $(messageElement).html()
+        .replace(/&quot;/g, '"')
+        .replace(/&#96;/g, '`')
+        .replace(/&#36;/g, '$')
+        .replace(/&lt;/g, '<');
+      $(messageElement).html(marked.parse(message));
+    }
+    hljs.initHighlightingOnLoad();
+  });
 
+  $(document).keydown(function (event) {
+    if (event.ctrlKey && event.key === 'Enter') {
+      sendMessage();
+    }
+  })
+}
+
+init();
