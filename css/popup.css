@@ -117,6 +117,7 @@
 
 .chat-item {
   margin-top: 40px;
+  max-width: 90%;
 }
 
 .role-gpt {
@@ -142,7 +143,6 @@
 }
 
 .chat-display-message {
-  max-width: 90%;
   min-height: 5px;
   margin-top: 10px;
   padding: 10px;
@@ -160,4 +160,15 @@
 .chat-display-placeholder {
   height: 1px;
   width: 10%;
+}
+
+.chat-time-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.chat-time {
+  margin-right: 10px;
+  font-size: 12px;
+  opacity: .6;
 }

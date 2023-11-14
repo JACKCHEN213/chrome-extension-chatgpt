@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/login.css">
+    <script src="plugins/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="plugins/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="plugins/bootstrap-icons/bootstrap-icons.min.css">
+    <script src="plugins/bootstrap/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div id="login-app" class="container-fluid">
+        <div class="logo">
+            <img src="images/app-logo.svg" alt="图标">
+            <h2>登录系统</h2>
+        </div>
+        <div class="login-form">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="username" autocomplete="off" placeholder="请输入用户名">
+                <label for="username">用户名</label>
+                <div class="valid-feedback" id="username-feedback">用户名错误</div>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" placeholder="请输入密码">
+                <label for="password">密码</label>
+                <div class="password-eye-wrapper">
+                    <i class="bi bi-eye-slash" id="password-eye"></i>
+                </div>
+                <div class="valid-feedback" id="password-feedback">密码错误</div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="remember">
+                <label class="form-check-label" for="remember">记住密码</label>
+            </div>
+            <div class="btn-group" role="group" aria-label="">
+                <button type="button" id="login-btn" class="btn btn-primary">登录</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/login.js"></script>
+</body>
+
+</html>

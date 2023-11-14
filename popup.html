@@ -14,6 +14,7 @@
   <script src="plugins/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="plugins/marked/marked.min.js"></script>
   <script src="plugins/highlight/highlight.min.js"></script>
+  <script src="plugins/highlight/highlight-copy-button.min.js"></script>
 </head>
 
 <body>
@@ -29,7 +30,7 @@
           <img src="images/avatar.png" alt="user profile">
         </a>
         <ul class="dropdown-menu" aria-labelledby="avatar-dropdown-toggle">
-          <li>
+          <li id="login-out">
             <a class="dropdown-item" style="cursor: pointer;">
               <i class="bi bi-box-arrow-right"></i>
               登出
@@ -45,8 +46,11 @@
             <img class="avatar-24" src="images/icon.png" alt="avatar" />
           </div>
           <div class="chat-display-wrapper">
-            <div class="chat-display-message">
-              1131
+            <div class="chat-display-message">1131</div>
+          </div>
+          <div class="chat-time-wrapper">
+            <div class="chat-time">
+              2023-11-13 17:50:12
             </div>
           </div>
         </li>
@@ -55,8 +59,11 @@
             <img class="avatar-24" src="images/icon.png" alt="avatar" />
           </div>
           <div class="chat-display-wrapper flex-row-reverse">
-            <div class="chat-display-message chat-display-message-man">
-              123131
+            <div class="chat-display-message chat-display-message-man">```python&#10;import os&#10;print(1)&#10;```</div>
+          </div>
+          <div class="chat-time-wrapper">
+            <div class="chat-time">
+              2023-11-13 17:50:12
             </div>
           </div>
         </li>

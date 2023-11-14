@@ -1,0 +1,41 @@
+#login-app {
+    width: 400px;
+    height: 600px;
+    padding: 20px;
+}
+
+.logo {
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo img {
+    width: 60px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 50px;
+}
+
+#password {
+    width: 100%;
+}
+
+.password-eye-wrapper {
+    position: relative
+}
+
+#password-eye {
+    position: absolute;
+    display: flex;
+    right: 10px;
+    top: -36px;
+}
+#login-btn {
+    margin-top: 10px;
+}
