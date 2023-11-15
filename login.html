@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 
 <head>
     <meta charset="utf-8">
@@ -10,6 +10,10 @@
     <link rel="stylesheet" type="text/css" href="plugins/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="plugins/bootstrap-icons/bootstrap-icons.min.css">
     <script src="plugins/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="plugins/base64/base64.min.js"></script>
+    <script src="plugins/md5/md5.min.js"></script>
+    <script src="js/alert-ex.js"></script>
+    <title></title>
 </head>
 
 <body>
@@ -22,7 +26,7 @@
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="username" autocomplete="off" placeholder="请输入用户名">
                 <label for="username">用户名</label>
-                <div class="valid-feedback" id="username-feedback">用户名错误</div>
+                <div class="invalid-feedback" id="username-feedback">用户名错误</div>
             </div>
             <div class="form-floating mb-3">
                 <input type="password" class="form-control" id="password" placeholder="请输入密码">
@@ -30,7 +34,7 @@
                 <div class="password-eye-wrapper">
                     <i class="bi bi-eye-slash" id="password-eye"></i>
                 </div>
-                <div class="valid-feedback" id="password-feedback">密码错误</div>
+                <div class="invalid-feedback" id="password-feedback">密码错误</div>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="" id="remember">
