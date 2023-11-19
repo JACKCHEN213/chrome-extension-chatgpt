@@ -1,4 +1,5 @@
-function sendMessage() {
+function sendMessage(liId = '' , clearInput = true) {
+    $('#chat-preview').remove();  // 移除当前存在的预览
     let message = $('#message-input').val();
     if (!message) {
         return;
@@ -8,7 +9,7 @@ function sendMessage() {
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
     let element = $(`
-    <li class="chat-item">
+    <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''}>
       <div class="role-man">
         <img class="avatar-24" src="images/icon.png" alt="avatar" />
       </div>
@@ -19,7 +20,9 @@ function sendMessage() {
       </div>
     </li>`);
     $('#chat-content ul').append(element);
-    $('#message-input').val('');
+    if (clearInput) {
+        $('#message-input').val('');
+    }
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
 }
@@ -76,12 +79,16 @@ function initOldData() {
 }
 
 function registerListener() {
-    $('#send-button').on('click', sendMessage);
     $(document).keydown(function (event) {
         if (event.ctrlKey && event.key === 'Enter') {
             sendMessage();
         }
     });
+    $('#message-input').on('input', () => {
+        $('#chat-content').scrollTop($('#chat-content')[0].scrollHeight); // 滚动到底部
+        sendMessage('chat-preview', false);
+    });
+    $('#send-button').on('click', sendMessage);
     $('#login-out').on('click', function () {
         window.localStorage.removeItem('account_info');
         window.location = 'login.html';
