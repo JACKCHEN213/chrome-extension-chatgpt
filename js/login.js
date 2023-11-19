@@ -35,7 +35,7 @@ function registerListener() {
         let remember = $('#remember').get(0).checked;
         $.ajax({
             type: 'POST',
-            url: 'http://192.168.24.20:3001/api/User/login',
+            url: `${BASE_URL}/${LOGIN_URL}`,
             contentType: 'application/json;charset=utf8',
             data: JSON.stringify({
                 username, password: btoa(md5(password))

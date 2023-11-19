@@ -23,8 +23,12 @@ function sendMessage(liId = '' , clearInput = true) {
     if (clearInput) {
         $('#message-input').val('');
     }
+
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
+    /**
+     * 聊天记录缓存设计
+     */
 }
 
 function loginOut() {
@@ -41,7 +45,7 @@ function initAuth() {
     accountInfo = JSON.parse(atob(accountInfo));
     $.ajax({
         type: 'POST',
-        url: 'http://192.168.24.20:3001/api/User/verify',
+        url: `${BASE_URL}/${AUTH_URL}`,
         contentType: 'application/json;charset=utf8',
         async: false,
         data: JSON.stringify({ token: accountInfo.token }),
@@ -56,6 +60,25 @@ function initAuth() {
             loginOut();
         }
     })
+}
+
+function chooseModel(chooseIndex) {
+    let modelLi = $('ul#model-list li');
+    let currentChooseTag = $('ul#model-list li.choose-model');
+    currentChooseTag.removeClass('choose-model');
+    currentChooseTag.find('input[type="radio"').remove();
+
+    let chooseModelTag = $(modelLi.get(chooseIndex));
+    chooseModelTag.addClass('choose-model');
+    chooseModelTag.append(`<input type="radio" checked />`)
+
+    let chooseModel = chooseModelTag.find('a.dropdown-item').html();
+    $('#model-dropdown-toggle span').html(`&nbsp;&nbsp;${chooseModel}`);
+    $('#model-dropdown-toggle').attr('title', chooseModel);
+    $('ul#model-list').scrollTop(chooseIndex * 32);
+
+    window.localStorage.setItem('chat-model', chooseModel);
+    return chooseModel;
 }
 
 function initOldData() {
@@ -76,6 +99,26 @@ function initOldData() {
     }
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
+    /**
+     * 默认值初始化
+     */
+    let model = window.localStorage.getItem('chat-model');
+    if (!model || !MODEL_LIST.includes(model)) {
+        window.localStorage.setItem('chat-model', DEFAULT_MODEL);
+        model = DEFAULT_MODEL;
+    }
+    
+    let modelListTag = $('ul#model-list');
+    modelListTag.html('');
+    let chooseIndex = 0;
+    for (const index in MODEL_LIST) {
+        let _model = MODEL_LIST[index].toLowerCase();
+        if (model.toLowerCase() === _model) {
+            chooseIndex = index;
+        }
+        modelListTag.append($(`<li><a class="dropdown-item" style="cursor: pointer;">${_model}</a></li>`));
+    }
+    chooseModel(chooseIndex);
 }
 
 function registerListener() {
@@ -92,6 +135,20 @@ function registerListener() {
     $('#login-out').on('click', function () {
         window.localStorage.removeItem('account_info');
         window.location = 'login.html';
+    });
+    $('#model-dropdown-toggle').on('click', function () {
+        let modelLi = $('ul#model-list li');
+        let chooseIndex = 0;
+        for (const index in modelLi) {
+            if ($(modelLi[index]).hasClass('choose-model')) {
+                chooseIndex = index;
+                break;
+            }
+        }
+        $('ul#model-list').scrollTop(chooseIndex * 32);
+    });
+    $('ul#model-list li').on('click', function () {
+        chooseModel(this.value);
     });
 }
 

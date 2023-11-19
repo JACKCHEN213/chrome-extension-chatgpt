@@ -48,7 +48,6 @@
   flex-direction: column-reverse;
 }
 
-
 #chat-content::-webkit-scrollbar {
   display: none;
   width: 0;
@@ -93,6 +92,35 @@
 
 #model-dropdown-toggle::after {
   display: none;
+}
+
+#model-dropdown-toggle span {
+  position: relative;
+  top: -1px;
+}
+
+#model-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#model-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+#model-list li {
+  border-bottom: 1px solid #dedede;
+}
+
+#model-list li:last-child {
+  border: none;
+}
+
+li.choose-model {
+  display: flex;
+  padding-right: 5px;
 }
 
 #chat-input {

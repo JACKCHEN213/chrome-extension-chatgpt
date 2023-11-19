@@ -15,6 +15,9 @@
   <script src="plugins/marked/marked.min.js"></script>
   <script src="plugins/highlight/highlight.min.js"></script>
   <script src="plugins/highlight/highlight-copy-button.min.js"></script>
+  <script src="plugins/toastr/toastr.min.js"></script>
+  <script src="Config.js"></script>
+  <title></title>
 </head>
 
 <body>
@@ -77,7 +80,7 @@
             <i class="bi bi-robot"></i>
             <span>&nbsp;&nbsp;GPT-4</span>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="model-dropdown-toggle">
+          <ul class="dropdown-menu" id="model-list" aria-labelledby="model-dropdown-toggle">
             <li>
               <a class="dropdown-item" style="cursor: pointer;">GPT-4</a>
             </li>
