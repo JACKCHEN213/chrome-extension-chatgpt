@@ -1,34 +1,125 @@
-function sendMessage(liId = '' , clearInput = true) {
+/**
+ * 获取日期时间
+ * @return {*}
+ */
+function getCurrentDatetimeStr() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    const second = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+}
+
+function getStoreSession() {
+    /**
+     * 聊天记录缓存设计
+     * 存储介质: localStorage
+     * 考虑方面:
+     * 1. 保存所有聊天记录
+     * 2. 多个聊天框支持
+     * 结构设计:
+     * {
+     *     current_session: 当前聊天的索引,
+     *     session_list: [ 所有聊天框
+     *         {
+     *             last_message: 最后发送的消息,
+     *             model: 使用的模型,
+     *             title: 对话框的标题,
+     *             topic_list: [  消息列表
+     *                 {
+     *                     content: 显示的内容,
+     *                     role: 说话的角色[],
+     *                     datetime: 发送的日期时间(Y-m-d H:i:s, 2012-07-12 11:35:42)
+     *                 }
+     *             ]
+     *         }
+     *     ]
+     * }
+     */
+    let storeSession = window.localStorage.getItem('store_session');
+    if (!storeSession) {  // 初始化
+        storeSession = {
+            current_session: 0,
+            session_list: [{
+                last_message: '',
+                model: DEFAULT_MODEL,
+                title: 'ChatGPT助手',
+                topic_list: [
+                    {
+                        content: '你好',
+                        role: 'gpt',
+                        datetime: getCurrentDatetimeStr(),
+                    }
+                ]
+            }]
+        }
+    } else {
+        storeSession = JSON.parse(storeSession);
+    }
+    return storeSession;
+}
+
+/**
+ * 添加消息
+ * @param message
+ * @param datetime
+ * @param role
+ * @param liId
+ */
+function appendMessage(message, datetime, role = 'user', liId = '') {
+    let element = $(`
+    <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''}>
+      <div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
+        <img class="avatar-24" src="images/icon.png" alt="avatar" />
+      </div>
+      <div class="chat-display-wrapper ${role === 'user' ? 'flex-row-reverse' : ''}">
+        <div class="chat-display-message chat-display-message-man">
+          ${marked.parse(message)}
+        </div>
+      </div>
+      <div class="chat-time-wrapper">
+        <div class="chat-time">
+          ${datetime}
+        </div>
+      </div>
+    </li>`);
+    $('#chat-content ul').append(element);
+
+    hljs.highlightAll();
+    hljs.initCopyButtonOnLoad();
+}
+
+function sendMessage(liId = '', clearInput = true) {
     $('#chat-preview').remove();  // 移除当前存在的预览
     let message = $('#message-input').val();
     if (!message) {
         return;
     }
-    message.replace(/&quot;/g, '"')
+    let currentDatetime = getCurrentDatetimeStr();
+    message = message.replace(/&quot;/g, '"')
         .replace(/&#96;/g, '`')
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
-    let element = $(`
-    <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''}>
-      <div class="role-man">
-        <img class="avatar-24" src="images/icon.png" alt="avatar" />
-      </div>
-      <div class="chat-display-wrapper flex-row-reverse">
-        <div class="chat-display-message chat-display-message-man">
-          ${marked.parse(message)}
-        </div>
-      </div>
-    </li>`);
-    $('#chat-content ul').append(element);
+    appendMessage(message, currentDatetime, 'user', liId);
     if (clearInput) {
         $('#message-input').val('');
     }
 
-    hljs.highlightAll();
-    hljs.initCopyButtonOnLoad();
-    /**
-     * 聊天记录缓存设计
-     */
+    if (!clearInput) {
+        return;
+    }
+
+    // 缓存
+    let storeSession = getStoreSession();
+    storeSession.session_list[storeSession.current_session].topic_list.push({
+        content: message,
+        role: 'user',
+        datetime: currentDatetime
+    });
+    window.localStorage.setItem('store_session', JSON.stringify(storeSession));
 }
 
 function loginOut() {
@@ -48,7 +139,7 @@ function initAuth() {
         url: `${BASE_URL}/${AUTH_URL}`,
         contentType: 'application/json;charset=utf8',
         async: false,
-        data: JSON.stringify({ token: accountInfo.token }),
+        data: JSON.stringify({token: accountInfo.token}),
         success: (data) => {
             if (data.success) {
                 //
@@ -62,23 +153,28 @@ function initAuth() {
     })
 }
 
-function chooseModel(chooseIndex) {
+function chooseModelByIndex(model) {
     let modelLi = $('ul#model-list li');
     let currentChooseTag = $('ul#model-list li.choose-model');
     currentChooseTag.removeClass('choose-model');
     currentChooseTag.find('input[type="radio"').remove();
+    let chooseIndex = 0;
+    for (const index in MODEL_LIST) {
+        if (model === MODEL_LIST[index]) {
+            chooseIndex = index;
+            $(modelLi.get(index)).addClass('choose-model');
+            $(modelLi.get(index)).append(`<input type="radio" checked />`);
+            break;
+        }
+    }
 
-    let chooseModelTag = $(modelLi.get(chooseIndex));
-    chooseModelTag.addClass('choose-model');
-    chooseModelTag.append(`<input type="radio" checked />`)
-
-    let chooseModel = chooseModelTag.find('a.dropdown-item').html();
-    $('#model-dropdown-toggle span').html(`&nbsp;&nbsp;${chooseModel}`);
-    $('#model-dropdown-toggle').attr('title', chooseModel);
+    $('#model-dropdown-toggle span').html(`&nbsp;&nbsp;${model}`);
+    $('#model-dropdown-toggle').attr('title', model);
     $('ul#model-list').scrollTop(chooseIndex * 32);
 
-    window.localStorage.setItem('chat-model', chooseModel);
-    return chooseModel;
+    let storeSession = getStoreSession();
+    storeSession.session_list[storeSession.current_session].model = model;
+    window.localStorage.setItem('store_session', JSON.stringify(storeSession));
 }
 
 function initOldData() {
@@ -88,37 +184,21 @@ function initOldData() {
             return hljs.highlight(code, {language: validLanguage}).value;
         }
     });
-    let messageList = $('#chat-content ul li div.chat-display-message');
-    for (const messageElement of messageList) {
-        let message = $(messageElement).html()
-            .replace(/&quot;/g, '"')
-            .replace(/&#96;/g, '`')
-            .replace(/&#36;/g, '$')
-            .replace(/&lt;/g, '<');
-        $(messageElement).html(marked.parse(message));
+    let storeSession = getStoreSession();
+    let chatSession = storeSession.session_list[storeSession.current_session];
+    let topicList = chatSession.topic_list;
+    for (const topic of topicList) {
+        appendMessage(topic.content, topic.datetime, topic.role);
     }
-    hljs.highlightAll();
-    hljs.initCopyButtonOnLoad();
-    /**
-     * 默认值初始化
-     */
-    let model = window.localStorage.getItem('chat-model');
-    if (!model || !MODEL_LIST.includes(model)) {
-        window.localStorage.setItem('chat-model', DEFAULT_MODEL);
-        model = DEFAULT_MODEL;
-    }
-    
+
+    let model = chatSession.model.toLowerCase();
     let modelListTag = $('ul#model-list');
     modelListTag.html('');
-    let chooseIndex = 0;
     for (const index in MODEL_LIST) {
         let _model = MODEL_LIST[index].toLowerCase();
-        if (model.toLowerCase() === _model) {
-            chooseIndex = index;
-        }
         modelListTag.append($(`<li><a class="dropdown-item" style="cursor: pointer;">${_model}</a></li>`));
     }
-    chooseModel(chooseIndex);
+    chooseModelByIndex(model);
 }
 
 function registerListener() {
@@ -148,7 +228,7 @@ function registerListener() {
         $('ul#model-list').scrollTop(chooseIndex * 32);
     });
     $('ul#model-list li').on('click', function () {
-        chooseModel(this.value);
+        chooseModelByIndex($(this).find('a.dropdown-item').html().trim());
     });
 }
 
