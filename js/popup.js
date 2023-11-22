@@ -1,3 +1,5 @@
+let textareaLine = 0;
+
 /**
  * 获取日期时间
  * @return {*}
@@ -104,13 +106,12 @@ function sendMessage(liId = '', clearInput = true) {
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
     appendMessage(message, currentDatetime, 'user', liId);
-    if (clearInput) {
-        $('#message-input').val('');
-    }
 
     if (!clearInput) {
         return;
     }
+    $('#message-input').val('');
+    textareaLine = 0;
 
     // 缓存
     let storeSession = getStoreSession();
@@ -119,6 +120,7 @@ function sendMessage(liId = '', clearInput = true) {
         role: 'user',
         datetime: currentDatetime
     });
+    $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
     window.localStorage.setItem('store_session', JSON.stringify(storeSession));
 }
 
@@ -190,6 +192,7 @@ function initOldData() {
     for (const topic of topicList) {
         appendMessage(topic.content, topic.datetime, topic.role);
     }
+    $('b.topic-nums').html(topicList.length);
 
     let model = chatSession.model.toLowerCase();
     let modelListTag = $('ul#model-list');
@@ -201,15 +204,54 @@ function initOldData() {
     chooseModelByIndex(model);
 }
 
+function setTextareaLine(obj) {
+    let value = $(obj).val();
+    let cv = '';
+    if ("selectionStart" in this) {
+        cv = value.substring(0, obj.selectionStart);
+    } else {
+        let oSel = document.selection.createRange();
+        oSel.moveStart('character', -obj.value.length);
+        cv = oSel.text;
+    }
+    textareaLine = cv.split('\n').length - 1
+}
+
 function registerListener() {
     $(document).keydown(function (event) {
         if (event.ctrlKey && event.key === 'Enter') {
             sendMessage();
+        } else if (event.key === 'Tab') {
+            let textareaTag = $('#message-input');
+            if (textareaTag.is(':focus')) {
+                event.preventDefault()
+                let value = textareaTag.val();
+                if (event.shiftKey) {
+                    if (!value) {
+                        return;
+                    }
+                    let textList = value.split('\n');
+                    let replaceContent = textList[textareaLine];
+                    let allChar = replaceContent.split('');
+                    for (let i = 0; i < 4; i++) {
+                        if (allChar[0] === ' ') {
+                            allChar.shift();
+                        }
+                    }
+                    textList[textareaLine] = allChar.join('');
+                    textareaTag.val(textList.join('\n'));
+                } else {
+                    textareaTag.val(value + '    ');
+                }
+            }
+        } else {
+            // console.log(event);
         }
     });
-    $('#message-input').on('input', () => {
+    $('#message-input').on('input', function () {
         $('#chat-content').scrollTop($('#chat-content')[0].scrollHeight); // 滚动到底部
         sendMessage('chat-preview', false);
+        setTextareaLine(this);
     });
     $('#send-button').on('click', sendMessage);
     $('#login-out').on('click', function () {
