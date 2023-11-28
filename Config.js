@@ -1,6 +1,7 @@
 const BASE_URL = 'http://192.168.24.20:3001';
 const LOGIN_URL = 'api/User/login';
 const AUTH_URL = 'api/User/verify';
+const MESSAGE_URL = 'api/Index/chat';
 
 const MODEL_LIST = [
     'gpt-4-1106-preview',
