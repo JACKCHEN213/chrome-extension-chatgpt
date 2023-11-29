@@ -13,7 +13,7 @@
     "48": "images/icon.png",
     "128": "images/icon.png"
   },
-  "minimum_chrome_version": "114",
+  "minimum_chrome_version": "1",
   "permissions": [
     "contextMenus",
     "activeTab",
