@@ -1,23 +1,20 @@
 let textareaLine = 0;
 
-/**
- * 获取日期时间
- * @return {*}
- */
-function getCurrentDatetimeStr(date = null) {
-    if (!date) {
-        date = new Date();
+async function getChromeCache(key) {
+    if (key === null) {
+        return await chrome.storage.local.get(null);
     }
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    const second = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    let chromeCache = await chrome.storage.local.get([key]);
+    return chromeCache[key];
 }
 
-function getStoreSession() {
+async function setChromeCache(key, value) {
+    let data = {};
+    data[key] = value;
+    await chrome.storage.local.set(data);
+}
+
+async function getStoreSession() {
     /**
      * 聊天记录缓存设计
      * 存储介质: localStorage
@@ -43,7 +40,7 @@ function getStoreSession() {
      *     ]
      * }
      */
-    let storeSession = window.localStorage.getItem('store_session');
+    let storeSession = await getChromeCache('store_session');
     if (!storeSession) {  // 初始化
         storeSession = {
             current_session: 0,
@@ -58,8 +55,9 @@ function getStoreSession() {
                         datetime: getCurrentDatetimeStr(),
                     }
                 ]
-            }]
+            }],
         }
+        await setChromeCache('store_session', JSON.stringify(storeSession));
     } else {
         storeSession = JSON.parse(storeSession);
     }
@@ -91,6 +89,8 @@ function appendMessage(message, datetime, role = 'user', liId = '') {
       </div>
     </li>`);
     $('#chat-content ul').append(element);
+    let chatContentTag = $('#chat-content');
+    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
 
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
@@ -109,94 +109,58 @@ function setLoading() {
     </li>`);
     $('#chat-content ul li#chat-loading').remove();
     $('#chat-content ul').append(element);
-}
-
-function deepCloneObject(target, hash = new WeakMap()) {
-    if (!(target !== null && typeof target === 'object')) {
-        return target;
-    }
-
-    if (hash.get(target)) {
-        return hash.get(target);
-    }
-
-    let newObj = Array.isArray(target) ? [] : {};
-    hash.set(target, newObj);
-
-    for (let key in target) {
-        if (Object.prototype.hasOwnProperty.call(target, key)) {
-            if ((target[key] !== null && typeof target[key] === 'object')) {
-                // 如果是{}则转成[]
-                if (JSON.stringify(target[key]) === '{}') {
-                    newObj[key] = [];
-                } else {
-                    // 递归拷贝
-                    newObj[key] = deepCloneObject(target[key], hash);
-                }
-            } else {
-                if (target[key].toString() === parseInt(target[key]).toString()) { // 判断是否为纯数字字符串
-                    newObj[key] = parseInt(target[key]);
-                } else if (target[key] === null) { // 判断是否为null
-                    newObj[key] = '';
-                } else {
-                    newObj[key] = target[key];
-                }
-            }
-        }
-    }
-
-    return newObj;
+    let chatContentTag = $('#chat-content');
+    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
 }
 
 /**
  * 发送请求
  */
-function chatRequest() {
-    window.localStorage.setItem('chat-loading', '1');
+async function chatRequest(storeSession) {
     setLoading();
-    let storeSession = getStoreSession();
-    let currentSession = deepCloneObject(storeSession.session_list[storeSession.current_session]);
+    let currentSession = storeSession.session_list[storeSession.current_session];
     if (currentSession.topic_list.length > 10) {
         currentSession.topic_list = currentSession.topic_list.slice(-10);
     }
-    $.ajax({
+    chrome.runtime.sendMessage({
+        message: "sendRequest",
         type: 'POST',
         url: `${BASE_URL}/${MESSAGE_URL}`,
-        contentType: 'application/json;charset=utf-8',
         data: JSON.stringify({
             messages: currentSession.topic_list,
             model: currentSession.model,
         }),
-        success: function (data) {
-            window.localStorage.removeItem('chat-loading');
+        headers: {
+            'Content-Type': 'application/json;charset=utf8',
+        },
+        action: 'chat',
+    }, function (response) {
+        if (response.error) {
+            console.log('Error:', response.error);
+        } else {
             $('#chat-content ul li#chat-loading').remove();
-            if (data.success) {
-                let openaiData = data.data;
+            if (response.data.success) {
+                let openaiData = response.data.data;
                 let choices = openaiData.choices;
-                storeSession = getStoreSession();
                 for (const choice of choices) {
                     let item = {
                         content: choice.message.content,
                         role: choice.message.role,
                         datetime: getCurrentDatetimeStr(new Date(openaiData.created * 1000))
                     };
-                    storeSession.session_list[storeSession.current_session].topic_list.push(item);
                     appendMessage(item.content, item.datetime, item.role);
                 }
-                window.localStorage.setItem('store_session', JSON.stringify(storeSession));
             } else {
-                toastr.error(data.message);
+                messageEx(response.data.message, 'error');
             }
-        },
-        error: function (error) {
-            console.error(error);
         }
     });
 }
 
-function sendMessage(liId = '', clearInput = true) {
+async function sendMessage(liId = '', clearInput = true) {
     $('#chat-preview').remove();  // 移除当前存在的预览
-    let message = $('#message-input').val();
+    let messageInputTag = $('#message-input');
+    let message = messageInputTag.val();
     if (!message) {
         return;
     }
@@ -210,11 +174,11 @@ function sendMessage(liId = '', clearInput = true) {
     if (!clearInput) {
         return;
     }
-    $('#message-input').val('');
+    messageInputTag.val('');
     textareaLine = 0;
 
     // 缓存
-    let storeSession = getStoreSession();
+    let storeSession = await getStoreSession();
     storeSession.session_list[storeSession.current_session].topic_list.push({
         content: message,
         role: 'user',
@@ -222,8 +186,8 @@ function sendMessage(liId = '', clearInput = true) {
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
-    window.localStorage.setItem('store_session', JSON.stringify(storeSession));
-    chatRequest();
+    await setChromeCache('store_session', JSON.stringify(storeSession));
+    await chatRequest(storeSession);
 }
 
 function loginOut() {
@@ -252,12 +216,13 @@ function initAuth() {
             }
         },
         error: (error) => {
+            console.log(error)
             loginOut();
         }
     })
 }
 
-function chooseModelByIndex(model) {
+async function chooseModelByIndex(model) {
     let modelLi = $('ul#model-list li');
     let currentChooseTag = $('ul#model-list li.choose-model');
     currentChooseTag.removeClass('choose-model');
@@ -276,19 +241,19 @@ function chooseModelByIndex(model) {
     $('#model-dropdown-toggle').attr('title', model);
     $('ul#model-list').scrollTop(chooseIndex * 32);
 
-    let storeSession = getStoreSession();
+    let storeSession = await getStoreSession();
     storeSession.session_list[storeSession.current_session].model = model;
-    window.localStorage.setItem('store_session', JSON.stringify(storeSession));
+    await setChromeCache('store_session', JSON.stringify(storeSession));
 }
 
-function initOldData() {
+async function initOldData() {
     marked.setOptions({
         highlight: function (code, language) {
             const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
             return hljs.highlight(code, {language: validLanguage}).value;
         }
     });
-    let storeSession = getStoreSession();
+    let storeSession = await getStoreSession();
     let chatSession = storeSession.session_list[storeSession.current_session];
     let topicList = chatSession.topic_list;
     for (const topic of topicList) {
@@ -303,16 +268,15 @@ function initOldData() {
         let _model = MODEL_LIST[index].toLowerCase();
         modelListTag.append($(`<li><a class="dropdown-item" style="cursor: pointer;">${_model}</a></li>`));
     }
-    chooseModelByIndex(model);
-    let chatLoading = window.localStorage.getItem('chat-loading');
-    if (chatLoading) {
+    await chooseModelByIndex(model);
+    if (await getChromeCache('chat-loading')) {
         setLoading();
     }
 }
 
 function setTextareaLine(obj) {
     let value = $(obj).val();
-    let cv = '';
+    let cv;
     if ("selectionStart" in this) {
         cv = value.substring(0, obj.selectionStart);
     } else {
@@ -324,11 +288,11 @@ function setTextareaLine(obj) {
 }
 
 function registerListener() {
-    $(document).keydown(function (event) {
+    $(document).keydown(async function (event) {
         let textareaTag = $('#message-input');
-        let storeSession = getStoreSession();
+        let storeSession = await getStoreSession();
         if (event.ctrlKey && event.key === 'Enter') {
-            sendMessage();
+            sendMessage().then();
         } else if (event.key === 'Tab') {
             if (textareaTag.is(':focus')) {
                 event.preventDefault()
@@ -363,8 +327,9 @@ function registerListener() {
         }
     });
     $('#message-input').on('input', function () {
-        $('#chat-content').scrollTop($('#chat-content')[0].scrollHeight); // 滚动到底部
-        sendMessage('chat-preview', false);
+        let chatContentTag = $('#chat-content');
+        chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
+        sendMessage('chat-preview', false).then();
         setTextareaLine(this);
     });
     $('#send-button').on('click', sendMessage);
@@ -384,13 +349,29 @@ function registerListener() {
         $('ul#model-list').scrollTop(chooseIndex * 32);
     });
     $('ul#model-list li').on('click', function () {
-        chooseModelByIndex($(this).find('a.dropdown-item').html().trim());
+        chooseModelByIndex($(this).find('a.dropdown-item').html().trim()).then();
+    });
+    $('a#clear-cache-toggle').on('click', function () {
+        chrome.storage.local.clear();
+        $('#chat-content ul').html('');
+    });
+    $('a#show-cache-toggle').on('click', async function () {
+        let storeSession = await getChromeCache('store_session');
+        let msg = 'store_session: ' + jsonHighlight(JSON.parse(storeSession)) + '<br>';
+        let chatLoading = await getChromeCache('chat-loading')
+        msg += 'chat-loading:' + chatLoading;
+        confirmEx({
+            title: '全部缓存',
+            message: msg,
+            modal_size: 'modal-sm',
+            body_height: '200px'
+        });
     });
 }
 
 function init() {
     initAuth();
-    initOldData();
+    initOldData().then();
     registerListener();
 }
 

@@ -15,8 +15,9 @@
   <script src="plugins/marked/marked.min.js"></script>
   <script src="plugins/highlight/highlight.min.js"></script>
   <script src="plugins/highlight/highlight-copy-button.min.js"></script>
-  <script src="plugins/toastr/toastr.min.js"></script>
   <script src="Config.js"></script>
+  <script src="js/alert-ex.js"></script>
+  <script src="js/tools.js"></script>
   <title></title>
 </head>
 
@@ -46,7 +47,7 @@
       <ul></ul>
     </div>
     <div id="chat-footer" class="form-group">
-      <div class="col-md-12">
+      <div class="col-md-12" id="chat-operate">
         <div id="chat-model" class="dropup">
           <a class="dropdown-toggle" id="model-dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
             aria-expanded="false">
@@ -54,6 +55,18 @@
             <span></span>
           </a>
           <ul class="dropdown-menu" id="model-list" aria-labelledby="model-dropdown-toggle"></ul>
+        </div>
+        <div id="clear-cache">
+          <a id="clear-cache-toggle">
+            <i class="bi bi-trash"></i>
+            <span>清除缓存</span>
+          </a>
+        </div>
+        <div id="show-cache">
+          <a id="show-cache-toggle">
+            <i class="bi bi-eyeglasses"></i>
+            <span>查看缓存</span>
+          </a>
         </div>
       </div>
       <div id="chat-input" class="col-md-12">

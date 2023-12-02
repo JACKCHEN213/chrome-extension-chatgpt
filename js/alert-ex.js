@@ -1,15 +1,17 @@
 /**
  * 确认框
  * @param {Object} params
- * @param {String} params.modal_size 弹窗大小['modal-sm', 'modal-lg', 'modal-xl']
+ * @param {String} [params.modal_size] 弹窗大小['modal-sm', 'modal-lg', 'modal-xl']
  * @param {String} params.title
  * @param {String} params.message
- * @param {String} params.confirm
- * @param {String} params.cancel
- * @param {Function} params.callback
+ * @param {String} [params.confirm]
+ * @param {String} [params.cancel]
+ * @param {String} [params.body_height] 窗口大小
+ * @param {Function} [params.callback]
  */
 function confirmEx(params) {
     let modal_size = params.modal_size !== undefined ? params.modal_size : '';
+    let body_height = params.body_height !== undefined ? params.body_height : '600px';
     const modalElemet = $(`
     <div class="modal fade" id="confirmEx" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="addAppLabel" aria-hidden="true">
@@ -19,7 +21,7 @@ function confirmEx(params) {
                     <h1 class="modal-title fs-5" id="confirmExHeader">${params.title !== undefined ? params.title : '确认框'}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="confirmExBody" style="max-height: cal(100vh - 600px); overflow-y: auto;">
+                <div class="modal-body" id="confirmExBody" style="max-height: ${body_height}; overflow-y: auto;">
                 ${params.message !== undefined && params.message}
                 </div>
                 <div class="modal-footer">

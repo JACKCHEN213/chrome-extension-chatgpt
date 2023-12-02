@@ -210,3 +210,23 @@ li.choose-model {
     font-size: 12px;
     opacity: .6;
 }
+
+span.string {
+    color: #3ab54a;
+}
+
+span.number {
+    color: #25aae2;
+}
+
+span.boolean {
+    color: #f98280;
+}
+
+span.null {
+    color: #f1592a;
+}
+
+span.key {
+    color: #92278f;
+}
