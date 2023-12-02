@@ -89,8 +89,6 @@ function appendMessage(message, datetime, role = 'user', liId = '') {
       </div>
     </li>`);
     $('#chat-content ul').append(element);
-    let chatContentTag = $('#chat-content');
-    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
 
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
@@ -150,6 +148,8 @@ async function chatRequest(storeSession) {
                     };
                     appendMessage(item.content, item.datetime, item.role);
                 }
+                let chatContentTag = $('#chat-content');
+                chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
             } else {
                 messageEx(response.data.message, 'error');
             }
@@ -170,6 +170,8 @@ async function sendMessage(liId = '', clearInput = true) {
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
     appendMessage(message, currentDatetime, 'user', liId);
+    let chatContentTag = $('#chat-content');
+    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
 
     if (!clearInput) {
         return;
@@ -246,13 +248,7 @@ async function chooseModelByIndex(model) {
     await setChromeCache('store_session', JSON.stringify(storeSession));
 }
 
-async function initOldData() {
-    marked.setOptions({
-        highlight: function (code, language) {
-            const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
-            return hljs.highlight(code, {language: validLanguage}).value;
-        }
-    });
+async function refreshChatContent() {
     let storeSession = await getStoreSession();
     let chatSession = storeSession.session_list[storeSession.current_session];
     let topicList = chatSession.topic_list;
@@ -260,7 +256,24 @@ async function initOldData() {
         appendMessage(topic.content, topic.datetime, topic.role);
     }
     $('b.topic-nums').html(topicList.length);
+}
 
+async function initOldData() {
+    marked.setOptions({
+        highlight: function (code, language) {
+            const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
+            return hljs.highlight(code, {language: validLanguage}).value;
+        }
+    });
+    refreshChatContent().then();
+    let chatContentTag = $('#chat-content');
+    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
+
+    /**
+     * 初始化模型
+     */
+    let storeSession = await getStoreSession();
+    let chatSession = storeSession.session_list[storeSession.current_session];
     let model = chatSession.model.toLowerCase();
     let modelListTag = $('ul#model-list');
     modelListTag.html('');
@@ -354,6 +367,7 @@ function registerListener() {
     $('a#clear-cache-toggle').on('click', function () {
         chrome.storage.local.clear();
         $('#chat-content ul').html('');
+        refreshChatContent().then();
     });
     $('a#show-cache-toggle').on('click', async function () {
         let storeSession = await getChromeCache('store_session');
