@@ -34,6 +34,7 @@ async function getStoreSession() {
      *                     content: 显示的内容,
      *                     role: 说话的角色[],
      *                     datetime: 发送的日期时间(Y-m-d H:i:s, 2012-07-12 11:35:42)
+     *                     id: 唯一的id
      *                 }
      *             ]
      *         }
@@ -53,6 +54,7 @@ async function getStoreSession() {
                         content: '你好',
                         role: 'system',  // assistant, user
                         datetime: getCurrentDatetimeStr(),
+                        id: generateUUID(),
                     }
                 ]
             }],
@@ -95,7 +97,7 @@ function appendMessage(message, datetime, role = 'user', liId = '') {
 }
 
 function setLoading() {
-    let element = $(`<li class="chat-item" id="chat-loading">
+    let element = $(`<li class="chat-item">
       <div class="role-gpt">
         <img class="avatar-24" src="images/icon.png" alt="avatar">
       </div>
@@ -105,7 +107,6 @@ function setLoading() {
         </div>
       </div>
     </li>`);
-    $('#chat-content ul li#chat-loading').remove();
     $('#chat-content ul').append(element);
     let chatContentTag = $('#chat-content');
     chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
@@ -115,45 +116,36 @@ function setLoading() {
  * 发送请求
  */
 async function chatRequest(storeSession) {
-    setLoading();
     let currentSession = storeSession.session_list[storeSession.current_session];
     // if (currentSession.topic_list.length > 10) {
     //     currentSession.topic_list = currentSession.topic_list.slice(-10);
     // }
+    let messages = [];
+    for (const topic of currentSession.topic_list) {
+        if (topic.role === 'loading') {
+            continue;
+        }
+        messages.push({
+            role: topic.role,
+            content: topic.content,
+        })
+    }
     chrome.runtime.sendMessage({
         message: "sendRequest",
         type: 'POST',
-        url: `${BASE_URL}/${MESSAGE_URL}`,
+        url: `${PROXY_URL}/${REAL_CHAT_URL}`,
         data: JSON.stringify({
-            messages: currentSession.topic_list,
+            messages: messages,
             model: currentSession.model,
+            stream: true,
         }),
         headers: {
             'Content-Type': 'application/json;charset=utf8',
+            'Authorization': `Bearer ${OPENAI_KEY}`
         },
         action: 'chat',
     }, function (response) {
-        if (response.error) {
-            console.log('Error:', response.error);
-        } else {
-            $('#chat-content ul li#chat-loading').remove();
-            if (response.data.success) {
-                let openaiData = response.data.data;
-                let choices = openaiData.choices;
-                for (const choice of choices) {
-                    let item = {
-                        content: choice.message.content,
-                        role: choice.message.role,
-                        datetime: getCurrentDatetimeStr(new Date(openaiData.created * 1000))
-                    };
-                    appendMessage(item.content, item.datetime, item.role);
-                }
-                let chatContentTag = $('#chat-content');
-                chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
-            } else {
-                messageEx(response.data.message, 'error');
-            }
-        }
+        refreshChatContent();
     });
 }
 
@@ -184,11 +176,20 @@ async function sendMessage(liId = '', clearInput = true) {
     storeSession.session_list[storeSession.current_session].topic_list.push({
         content: message,
         role: 'user',
-        datetime: currentDatetime
+        datetime: currentDatetime,
+        id: generateUUID(),
+    });
+    storeSession.session_list[storeSession.current_session].topic_list.push({
+        content: '',
+        role: 'loading',
+        datetime: currentDatetime,
+        id: generateUUID(),
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
-    await setChromeCache('store_session', JSON.stringify(storeSession));
+    setChromeCache('store_session', JSON.stringify(storeSession)).then(async () => {
+        await refreshChatContent();
+    });
     await chatRequest(storeSession);
 }
 
@@ -252,8 +253,13 @@ async function refreshChatContent() {
     let storeSession = await getStoreSession();
     let chatSession = storeSession.session_list[storeSession.current_session];
     let topicList = chatSession.topic_list;
+    $('#chat-content ul').html('');
     for (const topic of topicList) {
-        appendMessage(topic.content, topic.datetime, topic.role);
+        if (topic.role === 'loading') {
+            setLoading();
+        } else {
+            appendMessage(topic.content, topic.datetime, topic.role);
+        }
     }
     $('b.topic-nums').html(topicList.length);
 }
@@ -282,9 +288,6 @@ async function initOldData() {
         modelListTag.append($(`<li><a class="dropdown-item" style="cursor: pointer;">${_model}</a></li>`));
     }
     await chooseModelByIndex(model);
-    if (await getChromeCache('chat-loading')) {
-        setLoading();
-    }
 }
 
 function setTextareaLine(obj) {
@@ -298,6 +301,14 @@ function setTextareaLine(obj) {
         cv = oSel.text;
     }
     textareaLine = cv.split('\n').length - 1
+}
+
+function userInput() {
+    let objet = $('#message-input').get(0);
+    let chatContentTag = $('#chat-content');
+    chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
+    sendMessage('chat-preview', false).then();
+    setTextareaLine(objet);
 }
 
 function registerListener() {
@@ -335,16 +346,13 @@ function registerListener() {
                     textareaTag.val(lastMessage);
                 }
             }
+            userInput();
         } else {
             // console.log(event);
         }
     });
-    $('#message-input').on('input', function () {
-        let chatContentTag = $('#chat-content');
-        chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
-        sendMessage('chat-preview', false).then();
-        setTextareaLine(this);
-    });
+    $('#message-input').on('input', userInput)
+        .on('change', userInput);
     $('#send-button').on('click', sendMessage);
     $('#login-out').on('click', function () {
         window.localStorage.removeItem('account_info');
@@ -372,8 +380,8 @@ function registerListener() {
     $('a#show-cache-toggle').on('click', async function () {
         let storeSession = await getChromeCache('store_session');
         let msg = 'store_session: ' + jsonHighlight(JSON.parse(storeSession)) + '<br>';
-        let chatLoading = await getChromeCache('chat-loading')
-        msg += 'chat-loading:' + chatLoading;
+        let refreshFlag = await getChromeCache('refresh_flag')
+        msg += 'refresh_flag:' + refreshFlag;
         confirmEx({
             title: '全部缓存',
             message: msg,
@@ -383,10 +391,21 @@ function registerListener() {
     });
 }
 
+function initRefresh() {
+    setInterval(async () => {
+        let refreshFlag = await getChromeCache('refresh_flag');
+        if (refreshFlag) {
+            // await setChromeCache('refresh_flag', null);
+            await refreshChatContent();
+        }
+    }, 100);
+}
+
 function init() {
     initAuth();
     initOldData().then();
     registerListener();
+    initRefresh();
 }
 
 $(document).ready(function () {

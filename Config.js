@@ -2,6 +2,8 @@ const BASE_URL = 'http://192.168.24.20:3001';
 const LOGIN_URL = 'api/User/login';
 const AUTH_URL = 'api/User/verify';
 const MESSAGE_URL = 'api/Index/chat';
+const PROXY_URL = 'proxy';
+const REAL_CHAT_URL = 'v1/chat/completions';
 
 const MODEL_LIST = [
     'gpt-4-1106-preview',

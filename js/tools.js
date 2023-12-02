@@ -81,3 +81,18 @@ function getCurrentDatetimeStr(date = null) {
     const second = String(date.getSeconds()).padStart(2, '0');
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
+
+function generateUUID() {
+    let chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+    let uuid = Array(32).fill(null);
+    let radix = chars.length;
+
+    let timestamp = Date.now().toString(36);
+    uuid.splice(0, timestamp.length, ...timestamp.split(''));
+
+    for (let i = timestamp.length; i < 32; i++) {
+        uuid[i] = chars[0 | Math.random()*radix];
+    }
+
+    return uuid.join('');
+}
