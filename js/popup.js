@@ -119,9 +119,9 @@ function setLoading() {
 async function chatRequest(storeSession) {
     setLoading();
     let currentSession = storeSession.session_list[storeSession.current_session];
-    if (currentSession.topic_list.length > 10) {
-        currentSession.topic_list = currentSession.topic_list.slice(-10);
-    }
+    // if (currentSession.topic_list.length > 10) {
+    //     currentSession.topic_list = currentSession.topic_list.slice(-10);
+    // }
     chrome.runtime.sendMessage({
         message: "sendRequest",
         type: 'POST',
