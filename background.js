@@ -11,26 +11,26 @@ function addChatLog(message, token, model, type = 1) {
         }),
         headers: {
             'Content-Type': 'application/json;charset=utf8',
-            'Authorization': token 
+            'Authorization': token
         }
     });
 }
 
 async function sendChatRequest(request, sender, sendResponse) {
-    let account_info = await getChromeCache('account_info');
+    let accountInfo = await getChromeCache('account_info');
     /**
      * @see ACCOUNT_INFO_STRUCTURE
      */
-    account_info = JSON.parse(atob(account_info));
-    
-    addChatLog(request.content, account_info.token, request.data.model, 1);
-    
-    fetch(`${account_info.openai_proxy}/${OPENAI_CHAT_URL}`, {
+    accountInfo = JSON.parse(atob(accountInfo));
+
+    addChatLog(request.content, accountInfo.token, request.data.model, 1);
+
+    fetch(`${accountInfo.openai_proxy}/${OPENAI_CHAT_URL}`, {
         method: 'POST',
         body: JSON.stringify(request.data),
         headers: {
             'Content-Type': 'application/json;charset=utf8',
-            'Authorization': `Bearer ${account_info.openai_api_key}`
+            'Authorization': `Bearer ${accountInfo.openai_api_key}`
         },
     })
         .then(response => {
@@ -80,7 +80,7 @@ async function sendChatRequest(request, sender, sendResponse) {
                     // 检查是否读取完毕
                     if (done) {
                         console.log('已传输完毕', content);
-                        addChatLog(content, account_info.token, request.data.model, 2);
+                        addChatLog(content, accountInfo.token, request.data.model, 2);
                         await setChromeCache('refresh_flag', null);
                         return sendResponse({data: match});
                     }
@@ -111,14 +111,53 @@ async function sendChatRequest(request, sender, sendResponse) {
         .catch(error => sendResponse({error: error}));
 }
 
+async function loginVerify(request, sender, sendResponse) {
+    let accountInfo = await getChromeCache('account_info');
+    /**
+     * @see ACCOUNT_INFO_STRUCTURE
+     */
+    accountInfo = JSON.parse(atob(accountInfo));
+    fetch(`${BASE_URL}/${LOGIN_VERIFY_URL}`, {
+        method: 'POST',
+        body: JSON.stringify({
+            token: accountInfo.token
+        }),
+        headers: {
+            'Content-Type': 'application/json;charset=utf8',
+        }
+    })
+        .then(response => response.json())
+        .then(data => sendResponse({data: data}))
+        .catch(error => sendResponse({error: error}));
+}
+
+function login(request, sender, sendResponse) {
+    fetch(`${BASE_URL}/${LOGIN_URL}`, {
+        method: 'POST',
+        body: JSON.stringify(request.data),
+        headers: {
+            'Content-Type': 'application/json;charset=utf8',
+        }
+    })
+        .then(response => response.json())
+        .then(data => sendResponse({data: data}))
+        .catch(error => sendResponse({error: error}));
+}
+
 chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
         if (request.message === "chatRequestMessage") {
             sendChatRequest(request, sender, sendResponse).then();
             return true;
-        } else if (request.message === "log") {
+        } else if (request.message === "logMessage") {
             console.log(request)
             return true;
+        } else if (request.message === 'loginVerifyMessage') {
+            loginVerify(request, sender, sendResponse).then();
+            return true;
+        } else if (request.message === 'loginMessage') {
+            login(request, sender, sendResponse);
+            return true; 
         }
     }
 );

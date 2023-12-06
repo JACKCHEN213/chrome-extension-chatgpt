@@ -116,7 +116,7 @@ async function chatRequest(storeSession, content) {
             content: topic.content,
         })
     }
-    chrome.runtime.sendMessage({
+    let response = await chrome.runtime.sendMessage({
         message: "chatRequestMessage",
         data: {
             messages: messages,
@@ -124,9 +124,21 @@ async function chatRequest(storeSession, content) {
             stream: true,
         },
         content,
-    }, function (response) {
-        refreshChatContent();
     });
+    if (response.error) {
+        let msg = response.error;
+        if (typeof response.error !== 'string') {
+            msg = JSON.stringify(response.error);
+        }
+        confirmEx({
+            title: '提示',
+            message: msg,
+            modal_size: 'modal-sm',
+            body_height: '200px'
+        });
+    } else {
+        refreshChatContent();
+    }
 }
 
 async function sendMessage(liId = '', clearInput = true) {
@@ -180,30 +192,30 @@ function loginOut() {
 }
 
 async function initAuth() {
-    let accountInfo = await getChromeCache('account_info');
-    if (!accountInfo) {
+    if (!(await getChromeCache('account_info'))) {
         loginOut();
         return;
     }
-    accountInfo = JSON.parse(atob(accountInfo));
-    $.ajax({
-        type: 'POST',
-        url: `${BASE_URL}/${AUTH_URL}`,
-        contentType: 'application/json;charset=utf8',
-        async: false,
-        data: JSON.stringify({token: accountInfo.token}),
-        success: (data) => {
-            if (data.success) {
-                //
-            } else {
-                // loginOut();
-            }
-        },
-        error: (error) => {
-            console.log(error)
-            // loginOut();
+    let response = await chrome.runtime.sendMessage({
+        message: "loginVerifyMessage",
+    });
+    if (response.error) {
+        let msg = response.error;
+        if (typeof response.error !== 'string') {
+            msg = JSON.stringify(response.error);
         }
-    })
+        confirmEx({
+            title: '提示',
+            message: msg,
+            modal_size: 'modal-sm',
+            body_height: '200px'
+        });
+    } else {
+        let data = response.data;
+        if (!data.success) {
+            loginOut();
+        }
+    }
 }
 
 async function chooseModelByIndex(model) {

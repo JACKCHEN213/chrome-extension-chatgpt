@@ -1,6 +1,6 @@
 const BASE_URL = 'http://192.168.24.20:3001';
 const LOGIN_URL = 'api/User/login';
-const AUTH_URL = 'api/User/verify';
+const LOGIN_VERIFY_URL = 'api/User/verify';
 const CHAT_LOG_URL = 'api/Message/add'
 const OPENAI_CHAT_URL = 'v1/chat/completions';
 
