@@ -60,10 +60,14 @@ async function getStoreSession() {
  * @param liId
  */
 function appendMessage(message, datetime, role = 'user', liId = '') {
+    let avatar = 'images/icon.png';
+    if (role === 'user') {
+        avatar = 'images/user.png';
+    }
     let element = $(`
     <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''}>
       <div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
-        <img class="avatar-24" src="images/icon.png" alt="avatar" />
+        <img class="avatar-24" src="${avatar}" alt="avatar" />
       </div>
       <div class="chat-display-wrapper ${role === 'user' ? 'flex-row-reverse' : ''}">
         <div class="chat-display-message${role === 'user' ? ' chat-display-message-man' : ''}">
