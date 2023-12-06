@@ -101,7 +101,7 @@ function setLoading() {
 /**
  * 发送请求
  */
-async function chatRequest(storeSession) {
+async function chatRequest(storeSession, content) {
     let currentSession = storeSession.session_list[storeSession.current_session];
     // if (currentSession.topic_list.length > 10) {
     //     currentSession.topic_list = currentSession.topic_list.slice(-10);
@@ -117,19 +117,13 @@ async function chatRequest(storeSession) {
         })
     }
     chrome.runtime.sendMessage({
-        message: "sendRequest",
-        type: 'POST',
-        url: `${PROXY_URL}/${REAL_CHAT_URL}`,
-        data: JSON.stringify({
+        message: "chatRequestMessage",
+        data: {
             messages: messages,
             model: currentSession.model,
             stream: true,
-        }),
-        headers: {
-            'Content-Type': 'application/json;charset=utf8',
-            'Authorization': `Bearer ${OPENAI_KEY}`
         },
-        action: 'chat',
+        content,
     }, function (response) {
         refreshChatContent();
     });
@@ -176,7 +170,7 @@ async function sendMessage(liId = '', clearInput = true) {
     setChromeCache('store_session', JSON.stringify(storeSession)).then(async () => {
         await refreshChatContent();
     });
-    await chatRequest(storeSession);
+    await chatRequest(storeSession, message);
 }
 
 function loginOut() {
@@ -202,12 +196,12 @@ async function initAuth() {
             if (data.success) {
                 //
             } else {
-                loginOut();
+                // loginOut();
             }
         },
         error: (error) => {
             console.log(error)
-            loginOut();
+            // loginOut();
         }
     })
 }
@@ -355,7 +349,8 @@ function initModelSelect() {
 }
 
 function initClearCache() {
-    chrome.storage.local.clear();
+    setChromeCache('store_session', null).then();
+    setChromeCache('refresh_flag', null).then();
     $('#chat-content ul').html('');
     refreshChatContent().then();
 }
@@ -366,9 +361,13 @@ async function initShowCache() {
     let refreshFlag = await getChromeCache('refresh_flag')
     msg += 'refresh_flag:' + refreshFlag + '<br>';
     let accountInfo = await getChromeCache('account_info');
-    msg += 'account_info:' + jsonHighlight(JSON.parse(atob(accountInfo))) + '<br>';
+    if (accountInfo) {
+        msg += 'account_info:' + jsonHighlight(JSON.parse(atob(accountInfo))) + '<br>';
+    }
     let loginInfo = await getChromeCache('login_info');
-    msg += 'login_info:' + jsonHighlight(JSON.parse(atob(loginInfo))) + '<br>';
+    if (loginInfo) {
+        msg += 'login_info:' + jsonHighlight(JSON.parse(atob(loginInfo))) + '<br>';
+    }
     confirmEx({
         title: '全部缓存',
         message: msg,
