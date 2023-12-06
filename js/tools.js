@@ -96,3 +96,17 @@ function generateUUID() {
 
     return uuid.join('');
 }
+
+async function getChromeCache(key) {
+    if (key === null) {
+        return await chrome.storage.local.get(null);
+    }
+    let chromeCache = await chrome.storage.local.get([key]);
+    return chromeCache[key];
+}
+
+async function setChromeCache(key, value) {
+    let data = {};
+    data[key] = value;
+    await chrome.storage.local.set(data);
+}

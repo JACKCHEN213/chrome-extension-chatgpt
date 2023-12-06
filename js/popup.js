@@ -1,19 +1,5 @@
 let textareaLine = 0;
 
-async function getChromeCache(key) {
-    if (key === null) {
-        return await chrome.storage.local.get(null);
-    }
-    let chromeCache = await chrome.storage.local.get([key]);
-    return chromeCache[key];
-}
-
-async function setChromeCache(key, value) {
-    let data = {};
-    data[key] = value;
-    await chrome.storage.local.set(data);
-}
-
 async function getStoreSession() {
     /**
      * 聊天记录缓存设计
@@ -194,12 +180,13 @@ async function sendMessage(liId = '', clearInput = true) {
 }
 
 function loginOut() {
-    window.localStorage.removeItem('account_info');
-    window.location = 'login.html';
+    setChromeCache('account_info', null).then(() => {
+        window.location = 'login.html';
+    });
 }
 
-function initAuth() {
-    let accountInfo = window.localStorage.getItem('account_info');
+async function initAuth() {
+    let accountInfo = await getChromeCache('account_info');
     if (!accountInfo) {
         loginOut();
         return;
@@ -311,84 +298,94 @@ function userInput() {
     setTextareaLine(objet);
 }
 
+async function initKeydown(event) {
+    let textareaTag = $('#message-input');
+    let storeSession = await getStoreSession();
+    if (event.ctrlKey && event.key === 'Enter') {
+        sendMessage().then();
+    } else if (event.key === 'Tab') {
+        if (textareaTag.is(':focus')) {
+            event.preventDefault()
+            let value = textareaTag.val();
+            if (event.shiftKey) {
+                if (!value) {
+                    return;
+                }
+                let textList = value.split('\n');
+                let replaceContent = textList[textareaLine];
+                let allChar = replaceContent.split('');
+                for (let i = 0; i < 4; i++) {
+                    if (allChar[0] === ' ') {
+                        allChar.shift();
+                    }
+                }
+                textList[textareaLine] = allChar.join('');
+                textareaTag.val(textList.join('\n'));
+            } else {
+                textareaTag.val(value + '    ');
+            }
+        }
+    } else if (event.key === 'ArrowUp') {
+        if (textareaTag.is(':focus')) {
+            let lastMessage = storeSession.session_list[storeSession.current_session].last_message;
+            if (lastMessage) {
+                textareaTag.val(lastMessage);
+            }
+        }
+        userInput();
+    } else {
+        // console.log(event);
+    }
+}
+
+function initModelToggle() {
+    let modelLi = $('ul#model-list li');
+    let chooseIndex = 0;
+    for (const index in modelLi) {
+        if ($(modelLi[index]).hasClass('choose-model')) {
+            chooseIndex = index;
+            break;
+        }
+    }
+    $('ul#model-list').scrollTop(chooseIndex * 32);
+}
+
+function initModelSelect() {
+    chooseModelByIndex($(this).find('a.dropdown-item').html().trim()).then();
+}
+
+function initClearCache() {
+    chrome.storage.local.clear();
+    $('#chat-content ul').html('');
+    refreshChatContent().then();
+}
+
+async function initShowCache() {
+    let storeSession = await getChromeCache('store_session');
+    let msg = 'store_session: ' + jsonHighlight(JSON.parse(storeSession)) + '<br>';
+    let refreshFlag = await getChromeCache('refresh_flag')
+    msg += 'refresh_flag:' + refreshFlag + '<br>';
+    let accountInfo = await getChromeCache('account_info');
+    msg += 'account_info:' + jsonHighlight(JSON.parse(atob(accountInfo))) + '<br>';
+    let loginInfo = await getChromeCache('login_info');
+    msg += 'login_info:' + jsonHighlight(JSON.parse(atob(loginInfo))) + '<br>';
+    confirmEx({
+        title: '全部缓存',
+        message: msg,
+        modal_size: 'modal-sm',
+        body_height: '200px'
+    });
+}
+
 function registerListener() {
-    $(document).keydown(async function (event) {
-        let textareaTag = $('#message-input');
-        let storeSession = await getStoreSession();
-        if (event.ctrlKey && event.key === 'Enter') {
-            sendMessage().then();
-        } else if (event.key === 'Tab') {
-            if (textareaTag.is(':focus')) {
-                event.preventDefault()
-                let value = textareaTag.val();
-                if (event.shiftKey) {
-                    if (!value) {
-                        return;
-                    }
-                    let textList = value.split('\n');
-                    let replaceContent = textList[textareaLine];
-                    let allChar = replaceContent.split('');
-                    for (let i = 0; i < 4; i++) {
-                        if (allChar[0] === ' ') {
-                            allChar.shift();
-                        }
-                    }
-                    textList[textareaLine] = allChar.join('');
-                    textareaTag.val(textList.join('\n'));
-                } else {
-                    textareaTag.val(value + '    ');
-                }
-            }
-        } else if (event.key === 'ArrowUp') {
-            if (textareaTag.is(':focus')) {
-                let lastMessage = storeSession.session_list[storeSession.current_session].last_message;
-                if (lastMessage) {
-                    textareaTag.val(lastMessage);
-                }
-            }
-            userInput();
-        } else {
-            // console.log(event);
-        }
-    });
-    $('#message-input').on('input', userInput)
-        .on('change', userInput);
+    $(document).keydown(initKeydown);
+    $('#message-input').on('input change', userInput);
     $('#send-button').on('click', sendMessage);
-    $('#login-out').on('click', function () {
-        window.localStorage.removeItem('account_info');
-        window.location = 'login.html';
-    });
-    $('#model-dropdown-toggle').on('click', function () {
-        let modelLi = $('ul#model-list li');
-        let chooseIndex = 0;
-        for (const index in modelLi) {
-            if ($(modelLi[index]).hasClass('choose-model')) {
-                chooseIndex = index;
-                break;
-            }
-        }
-        $('ul#model-list').scrollTop(chooseIndex * 32);
-    });
-    $('ul#model-list li').on('click', function () {
-        chooseModelByIndex($(this).find('a.dropdown-item').html().trim()).then();
-    });
-    $('a#clear-cache-toggle').on('click', function () {
-        chrome.storage.local.clear();
-        $('#chat-content ul').html('');
-        refreshChatContent().then();
-    });
-    $('a#show-cache-toggle').on('click', async function () {
-        let storeSession = await getChromeCache('store_session');
-        let msg = 'store_session: ' + jsonHighlight(JSON.parse(storeSession)) + '<br>';
-        let refreshFlag = await getChromeCache('refresh_flag')
-        msg += 'refresh_flag:' + refreshFlag;
-        confirmEx({
-            title: '全部缓存',
-            message: msg,
-            modal_size: 'modal-sm',
-            body_height: '200px'
-        });
-    });
+    $('#login-out').on('click', loginOut);
+    $('#model-dropdown-toggle').on('click', initModelToggle);
+    $('ul#model-list li').on('click', initModelSelect);
+    $('a#clear-cache-toggle').on('click', initClearCache);
+    $('a#show-cache-toggle').on('click', initShowCache);
 }
 
 function initRefresh() {
@@ -402,10 +399,11 @@ function initRefresh() {
 }
 
 function init() {
-    initAuth();
-    initOldData().then();
-    registerListener();
-    initRefresh();
+    initAuth().then(() => {
+        initOldData().then();
+        registerListener();
+        initRefresh();
+    });
 }
 
 $(document).ready(function () {

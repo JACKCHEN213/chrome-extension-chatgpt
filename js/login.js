@@ -1,5 +1,5 @@
-function initOldData() {
-    let loginInfo = window.localStorage.getItem('login_info');
+async function initOldData() {
+    let loginInfo = await getChromeCache('login_info');
     if (!loginInfo) {
         return;
     }
@@ -38,18 +38,21 @@ function registerListener() {
             url: `${BASE_URL}/${LOGIN_URL}`,
             contentType: 'application/json;charset=utf8',
             data: JSON.stringify({
-                username, password: btoa(md5(password))
+                username,
+                password: btoa(md5(password))
             }),
-            success: (data) => {
+            success: async (data) => {
                 if (data.success) {
                     let accountInfo = btoa(JSON.stringify(data.data));
-                    window.localStorage.setItem('account_info', accountInfo);
+                    await setChromeCache('account_info', accountInfo);
                     if (remember) {
-                        window.localStorage.setItem('login_info', btoa(JSON.stringify({
-                            username, password
-                        })));
+                        let loginInfo = btoa(JSON.stringify({
+                            username,
+                            password
+                        }));
+                        await setChromeCache('login_info', loginInfo);
                     }
-                    toastr.success('登录成功');
+                    messageEx('登录成功');
                     window.location = 'popup.html';
                 } else {
                     $('#username-feedback').html(data.message).show();
@@ -60,7 +63,7 @@ function registerListener() {
 }
 
 function init() {
-    initOldData();
+    initOldData().then();
     registerListener();
 }
 
