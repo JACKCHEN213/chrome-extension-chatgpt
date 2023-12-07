@@ -1,5 +1,3 @@
-let textareaLine = 0;
-
 async function getStoreSession() {
     /**
      * 聊天记录缓存设计
@@ -20,7 +18,8 @@ async function getStoreSession() {
      *                     content: 显示的内容,
      *                     role: 说话的角色[],
      *                     datetime: 发送的日期时间(Y-m-d H:i:s, 2012-07-12 11:35:42)
-     *                     id: 唯一的id
+     *                     id: 唯一的id,
+     *                     isFinish: 是否结束
      *                 }
      *             ]
      *         }
@@ -41,6 +40,7 @@ async function getStoreSession() {
                         role: 'system',  // assistant, user
                         datetime: getCurrentDatetimeStr(),
                         id: generateUUID(),
+                        isFinish: true,
                     }
                 ]
             }],
@@ -54,13 +54,15 @@ async function getStoreSession() {
 
 /**
  * 添加消息
- * @param message
- * @param datetime
- * @param role
- * @param liId
  */
-function appendMessage(message, datetime, role = 'user', liId = '') {
+function appendMessage({message, datetime, role = 'user', liId = '', isInput = false}) {
     let avatar = 'images/icon.png';
+    let isInputText = '';
+    if (isInput) {
+        isInputText = `<div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
+        <span style="font-size: 12px; color: #999">正在输入....</span>
+      </div>`;
+    }
     if (role === 'user') {
         avatar = 'images/user.png';
     }
@@ -69,6 +71,7 @@ function appendMessage(message, datetime, role = 'user', liId = '') {
       <div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
         <img class="avatar-24" src="${avatar}" alt="avatar" />
       </div>
+      ${isInputText}
       <div class="chat-display-wrapper ${role === 'user' ? 'flex-row-reverse' : ''}">
         <div class="chat-display-message${role === 'user' ? ' chat-display-message-man' : ''}">
           ${marked.parse(message)}
@@ -90,6 +93,9 @@ function setLoading() {
     let element = $(`<li class="chat-item">
       <div class="role-gpt">
         <img class="avatar-24" src="images/icon.png" alt="avatar">
+      </div>
+      <div class="role-gpt">
+        <span style="font-size: 12px; color: #999">正在输入....</span>
       </div>
       <div class="chat-display-wrapper ">
         <div class="chat-display-message">
@@ -145,7 +151,7 @@ async function chatRequest(storeSession, content) {
     }
 }
 
-async function sendMessage(liId = '', clearInput = true) {
+async function sendMessage(liId = '', isInput = false) {
     $('#chat-preview').remove();  // 移除当前存在的预览
     let messageInputTag = $('#message-input');
     let message = messageInputTag.val();
@@ -157,15 +163,20 @@ async function sendMessage(liId = '', clearInput = true) {
         .replace(/&#96;/g, '`')
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
-    appendMessage(message, currentDatetime, 'user', liId);
+    appendMessage({
+        message,
+        datetime: currentDatetime,
+        role: 'user',
+        liId,
+        isInput,
+    });
     let chatContentTag = $('#chat-content');
     chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
 
-    if (!clearInput) {
+    if (isInput) {
         return;
     }
     messageInputTag.val('');
-    textareaLine = 0;
 
     // 缓存
     let storeSession = await getStoreSession();
@@ -180,6 +191,7 @@ async function sendMessage(liId = '', clearInput = true) {
         role: 'loading',
         datetime: currentDatetime,
         id: generateUUID(),
+        isFinish: true,
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
@@ -255,7 +267,12 @@ async function refreshChatContent() {
         if (topic.role === 'loading') {
             setLoading();
         } else {
-            appendMessage(topic.content, topic.datetime, topic.role);
+            appendMessage({
+                message: topic.content,
+                datetime: topic.datetime,
+                role: topic.role,
+                isInput: !topic.isFinish
+            });
         }
     }
     $('b.topic-nums').html(topicList.length);
@@ -287,25 +304,10 @@ async function initOldData() {
     await chooseModelByIndex(model);
 }
 
-function setTextareaLine(obj) {
-    let value = $(obj).val();
-    let cv;
-    if ("selectionStart" in this) {
-        cv = value.substring(0, obj.selectionStart);
-    } else {
-        let oSel = document.selection.createRange();
-        oSel.moveStart('character', -obj.value.length);
-        cv = oSel.text;
-    }
-    textareaLine = cv.split('\n').length - 1
-}
-
 function userInput() {
-    let objet = $('#message-input').get(0);
     let chatContentTag = $('#chat-content');
     chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
-    sendMessage('chat-preview', false).then();
-    setTextareaLine(objet);
+    sendMessage('chat-preview', true).then();
 }
 
 async function initKeydown(event) {
@@ -313,28 +315,6 @@ async function initKeydown(event) {
     let storeSession = await getStoreSession();
     if (event.ctrlKey && event.key === 'Enter') {
         sendMessage().then();
-    } else if (event.key === 'Tab') {
-        if (textareaTag.is(':focus')) {
-            event.preventDefault()
-            let value = textareaTag.val();
-            if (event.shiftKey) {
-                if (!value) {
-                    return;
-                }
-                let textList = value.split('\n');
-                let replaceContent = textList[textareaLine];
-                let allChar = replaceContent.split('');
-                for (let i = 0; i < 4; i++) {
-                    if (allChar[0] === ' ') {
-                        allChar.shift();
-                    }
-                }
-                textList[textareaLine] = allChar.join('');
-                textareaTag.val(textList.join('\n'));
-            } else {
-                textareaTag.val(value + '    ');
-            }
-        }
     } else if (event.key === 'ArrowUp') {
         if (textareaTag.is(':focus')) {
             let lastMessage = storeSession.session_list[storeSession.current_session].last_message;

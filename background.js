@@ -58,6 +58,7 @@ async function sendChatRequest(request, sender, sendResponse) {
                 return reader.read().then(async ({done, value}) => {
                     // 处理每个数据块
                     let text = new TextDecoder().decode(new Uint8Array(value));
+                    let isDone = /data: \[DONE]/g.exec(text)
 
                     let match;
                     let role = 'assistant';
@@ -93,6 +94,7 @@ async function sendChatRequest(request, sender, sendResponse) {
                                 content: content,
                                 datetime: getCurrentDatetimeStr(),
                                 role: role,
+                                isFinish: !!isDone,
                             }
                             await setChromeCache('store_session', JSON.stringify(storeSession));
                             await setChromeCache('refresh_flag', '1');
