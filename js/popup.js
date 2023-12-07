@@ -67,9 +67,15 @@ function appendMessage({message, datetime, role = 'user', liId = '', isInput = f
         avatar = 'images/user.png';
     }
     let element = $(`
-    <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''}>
+    <li class="chat-item" ${liId ? 'id="' + liId + '"' : ''} data-value="${message}">
       <div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
         <img class="avatar-24" src="${avatar}" alt="avatar" />
+          <div>
+            <a class="copy-item">
+              <i class="bi bi-copy"></i>
+              <span>复制</span>
+            </a>
+          </div>
       </div>
       ${isInputText}
       <div class="chat-display-wrapper ${role === 'user' ? 'flex-row-reverse' : ''}">
@@ -87,6 +93,7 @@ function appendMessage({message, datetime, role = 'user', liId = '', isInput = f
 
     hljs.highlightAll();
     hljs.initCopyButtonOnLoad();
+    registerChatItem();
 }
 
 function setLoading() {
@@ -185,13 +192,14 @@ async function sendMessage(liId = '', isInput = false) {
         role: 'user',
         datetime: currentDatetime,
         id: generateUUID(),
+        isFinish: true,
     });
     storeSession.session_list[storeSession.current_session].topic_list.push({
         content: '',
         role: 'loading',
         datetime: currentDatetime,
         id: generateUUID(),
-        isFinish: true,
+        isFinish: false,
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
@@ -372,6 +380,20 @@ async function initShowCache() {
     });
 }
 
+function registerChatItem() {
+    $('.chat-item').unbind('mouseenter, mouseleave').on('mouseenter', function () {
+        $(this).find('.copy-item').css('opacity', 1);
+    }).on('mouseleave', function () {
+        $(this).find('.copy-item').css('opacity', 0);
+    });
+    $('.copy-item').unbind('click').on('click', function () {
+        let message = $(this).closest('li.chat-item').data('value');
+        navigator.clipboard.writeText(message).then(() => {
+            messageEx('复制成功')
+        });
+    });
+}
+
 function registerListener() {
     $(document).keydown(initKeydown);
     $('#message-input').on('input change', userInput);
@@ -381,6 +403,7 @@ function registerListener() {
     $('ul#model-list li').on('click', initModelSelect);
     $('a#clear-cache-toggle').on('click', initClearCache);
     $('a#show-cache-toggle').on('click', initShowCache);
+    registerChatItem();
 }
 
 function initRefresh() {
@@ -394,6 +417,7 @@ function initRefresh() {
 }
 
 function init() {
+    registerChatItem();
     initAuth().then(() => {
         initOldData().then();
         registerListener();
