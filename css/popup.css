@@ -43,6 +43,7 @@
 
 #avatar-dropdown-toggle {
     text-decoration: none;
+    color: #000;
 }
 
 #avatar-dropdown-toggle::after {
