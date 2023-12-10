@@ -24,9 +24,19 @@
 <body>
 <div id="app" class="container-fluid">
     <div id="chat-header">
-        <div id="chat-name">
-            <h4 class="text-black">ChatGPT助手</h4>
-            <span class="text-black-50">共<b class="topic-nums"></b>条聊天记录</span>
+        <div id="chat-name" class="dropdown">
+            <div>
+                <a class="dropdown-toggle" id="chat-mask"
+                   data-bs-toggle="dropdown" href="#" role="button"
+                   aria-expanded="false">
+                    <span id="chat-mask-title">ChatGPT助手</span>
+                    <span id="chat-mask-tips">(点击切换面具)</span>
+                </a>
+                <ul id="chat-mask-menu" class="dropdown-menu" aria-labelledby="chat-mask">
+                    <li>ChatGPT助手</li>
+                </ul>
+            </div>
+            <span class="text-black-50" id="chat-count">共<b class="topic-nums"></b>条聊天记录</span>
         </div>
         <div id="user-avatar" class="dropdown">
             <a class="dropdown-toggle" id="avatar-dropdown-toggle"

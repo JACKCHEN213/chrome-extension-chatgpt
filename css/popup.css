@@ -13,12 +13,30 @@
     align-items: center;
 }
 
-#chat-name h4 {
-    margin: 0;
-    font-size: 16px;
+#chat-mask {
+    text-decoration: none;
 }
 
-#chat-name span {
+#chat-mask::after {
+    display: none;
+}
+
+#chat-mask-title {
+    margin: 0;
+    font-size: 16px;
+    color: #000;
+}
+
+#chat-mask-tips {
+    font-size: 12px;
+    color: green;
+}
+
+#chat-mask-menu li {
+    cursor: pointer;
+}
+
+#chat-count {
     margin: 0;
     font-size: 12px;
 }
