@@ -26,7 +26,7 @@ async function getStoreSession() {
      *     ]
      * }
      */
-    let storeSession = await getChromeCache('store_session');
+    let storeSession = await getLocalCache('store_session');
     if (!storeSession) {  // 初始化
         storeSession = {
             current_session: 0,
@@ -45,7 +45,7 @@ async function getStoreSession() {
                 ]
             }],
         }
-        await setChromeCache('store_session', JSON.stringify(storeSession));
+        await setLocalCache('store_session', JSON.stringify(storeSession));
     } else {
         storeSession = JSON.parse(storeSession);
     }
@@ -133,7 +133,7 @@ async function chatRequest(storeSession, content) {
             content: topic.content,
         })
     }
-    let response = await chrome.runtime.sendMessage({
+    let response = await sendRequestMessage({
         message: "chatRequestMessage",
         data: {
             messages: messages,
@@ -203,24 +203,24 @@ async function sendMessage(liId = '', isInput = false) {
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
-    setChromeCache('store_session', JSON.stringify(storeSession)).then(async () => {
+    setLocalCache('store_session', JSON.stringify(storeSession)).then(async () => {
         await refreshChatContent();
     });
     await chatRequest(storeSession, message);
 }
 
 function loginOut() {
-    setChromeCache('account_info', null).then(() => {
+    setLocalCache('account_info', null).then(() => {
         window.location = 'login.html';
     });
 }
 
 async function initAuth() {
-    if (!(await getChromeCache('account_info'))) {
+    if (!(await getLocalCache('account_info'))) {
         loginOut();
         return;
     }
-    let response = await chrome.runtime.sendMessage({
+    let response = await sendRequestMessage({
         message: "loginVerifyMessage",
     });
     if (response.error) {
@@ -263,7 +263,7 @@ async function chooseModelByIndex(model) {
 
     let storeSession = await getStoreSession();
     storeSession.session_list[storeSession.current_session].model = model;
-    await setChromeCache('store_session', JSON.stringify(storeSession));
+    await setLocalCache('store_session', JSON.stringify(storeSession));
 }
 
 async function refreshChatContent() {
@@ -353,22 +353,22 @@ function initModelSelect() {
 }
 
 function initClearCache() {
-    setChromeCache('store_session', null).then();
-    setChromeCache('refresh_flag', null).then();
+    setLocalCache('store_session', null).then();
+    setLocalCache('refresh_flag', null).then();
     $('#chat-content ul').html('');
     refreshChatContent().then();
 }
 
 async function initShowCache() {
-    let storeSession = await getChromeCache('store_session');
+    let storeSession = await getLocalCache('store_session');
     let msg = 'store_session: ' + jsonHighlight(JSON.parse(storeSession)) + '<br>';
-    let refreshFlag = await getChromeCache('refresh_flag')
+    let refreshFlag = await getLocalCache('refresh_flag')
     msg += 'refresh_flag:' + refreshFlag + '<br>';
-    let accountInfo = await getChromeCache('account_info');
+    let accountInfo = await getLocalCache('account_info');
     if (accountInfo) {
         msg += 'account_info:' + jsonHighlight(JSON.parse(atob(accountInfo))) + '<br>';
     }
-    let loginInfo = await getChromeCache('login_info');
+    let loginInfo = await getLocalCache('login_info');
     if (loginInfo) {
         msg += 'login_info:' + jsonHighlight(JSON.parse(atob(loginInfo))) + '<br>';
     }
@@ -408,7 +408,7 @@ function registerListener() {
 
 function initRefresh() {
     setInterval(async () => {
-        let refreshFlag = await getChromeCache('refresh_flag');
+        let refreshFlag = await getLocalCache('refresh_flag');
         if (refreshFlag) {
             // await setChromeCache('refresh_flag', null);
             await refreshChatContent();

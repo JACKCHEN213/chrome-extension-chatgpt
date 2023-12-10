@@ -23,3 +23,9 @@ const ACCOUNT_INFO_STRUCTURE = {
     openai_session_key: '',
     token: '',
 };
+
+/**
+ * 使用的场景
+ * @type {number} 【1谷歌扩展 2浏览器】
+ */
+const WORK_SCENE = 1;

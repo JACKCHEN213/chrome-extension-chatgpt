@@ -2,83 +2,84 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" type="text/css" href="css/popup.css">
-  <script src="plugins/jquery.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="plugins/bootstrap/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="plugins/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="plugins/highlight/styles/dark.min.css">
-  <script src="plugins/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="plugins/marked/marked.min.js"></script>
-  <script src="plugins/highlight/highlight.min.js"></script>
-  <script src="plugins/highlight/highlight-copy-button.min.js"></script>
-  <script src="Config.js"></script>
-  <script src="js/alert-ex.js"></script>
-  <script src="js/tools.js"></script>
-  <title></title>
+    <link rel="stylesheet" type="text/css" href="css/popup.css">
+    <script src="plugins/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="plugins/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="plugins/bootstrap-icons/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="plugins/highlight/styles/dark.min.css">
+    <script src="plugins/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="plugins/marked/marked.min.js"></script>
+    <script src="plugins/highlight/highlight.min.js"></script>
+    <script src="plugins/highlight/highlight-copy-button.min.js"></script>
+    <script src="Config.js"></script>
+    <script src="js/alert-ex.js"></script>
+    <script src="js/tools.js"></script>
+    <title></title>
 </head>
 
 <body>
-  <div id="app" class="container-fluid">
+<div id="app" class="container-fluid">
     <div id="chat-header">
-      <div id="chat-name">
-        <h4 class="text-black">ChatGPT助手</h4>
-        <span class="text-black-50">共<b class="topic-nums">100</b>条聊天记录</span>
-      </div>
-      <div id="user-avatar" class="dropdown">
-        <a class="dropdown-toggle" id="avatar-dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-          aria-expanded="false">
-          <img src="images/avatar.png" alt="user profile">
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="avatar-dropdown-toggle">
-          <li id="login-out">
-            <a class="dropdown-item" style="cursor: pointer;">
-              <i class="bi bi-box-arrow-right"></i>
-              登出
+        <div id="chat-name">
+            <h4 class="text-black">ChatGPT助手</h4>
+            <span class="text-black-50">共<b class="topic-nums"></b>条聊天记录</span>
+        </div>
+        <div id="user-avatar" class="dropdown">
+            <a class="dropdown-toggle" id="avatar-dropdown-toggle"
+               data-bs-toggle="dropdown" href="#" role="button"
+               aria-expanded="false">
+                <i class="bi bi-person"></i>
             </a>
-          </li>
-        </ul>
-      </div>
+            <ul class="dropdown-menu" aria-labelledby="avatar-dropdown-toggle">
+                <li id="login-out">
+                    <a class="dropdown-item" style="cursor: pointer;">
+                        <i class="bi bi-box-arrow-right"></i>
+                        登出
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
     <div id="chat-content">
-      <ul></ul>
+        <ul></ul>
     </div>
     <div id="chat-footer" class="form-group">
-      <div class="col-md-12" id="chat-operate">
-        <div id="chat-model" class="dropup">
-          <a class="dropdown-toggle" id="model-dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-            aria-expanded="false">
-            <i class="bi bi-robot"></i>
-            <span></span>
-          </a>
-          <ul class="dropdown-menu" id="model-list" aria-labelledby="model-dropdown-toggle"></ul>
+        <div class="col-md-12" id="chat-operate">
+            <div id="chat-model" class="dropup">
+                <a class="dropdown-toggle" id="model-dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
+                   aria-expanded="false">
+                    <i class="bi bi-robot"></i>
+                    <span></span>
+                </a>
+                <ul class="dropdown-menu" id="model-list" aria-labelledby="model-dropdown-toggle"></ul>
+            </div>
+            <div id="clear-cache">
+                <a id="clear-cache-toggle">
+                    <i class="bi bi-trash"></i>
+                    <span>清除缓存</span>
+                </a>
+            </div>
+            <div id="show-cache">
+                <a id="show-cache-toggle">
+                    <i class="bi bi-eyeglasses"></i>
+                    <span>查看缓存</span>
+                </a>
+            </div>
         </div>
-        <div id="clear-cache">
-          <a id="clear-cache-toggle">
-            <i class="bi bi-trash"></i>
-            <span>清除缓存</span>
-          </a>
+        <div id="chat-input" class="col-md-12">
+            <textarea id="message-input" autofocus class="form-control" rows="2"></textarea>
+            <div id="send-button" class="btn btn-primary">
+                <i class="bi bi-send"></i>
+                发送
+            </div>
         </div>
-        <div id="show-cache">
-          <a id="show-cache-toggle">
-            <i class="bi bi-eyeglasses"></i>
-            <span>查看缓存</span>
-          </a>
-        </div>
-      </div>
-      <div id="chat-input" class="col-md-12">
-        <textarea id="message-input" autofocus class="form-control" rows="2"></textarea>
-        <div id="send-button" class="btn btn-primary">
-          <i class="bi bi-send"></i>
-          发送
-        </div>
-      </div>
     </div>
-  </div>
-  <script src="js/popup.js"></script>
+</div>
+<script src="js/popup.js"></script>
 </body>
 
 </html>

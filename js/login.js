@@ -1,5 +1,5 @@
 async function initOldData() {
-    let loginInfo = await getChromeCache('login_info');
+    let loginInfo = await getLocalCache('login_info');
     if (!loginInfo) {
         return;
     }
@@ -33,13 +33,14 @@ function registerListener() {
                 return;
             }
             let remember = $('#remember').get(0).checked;
-            let response = await chrome.runtime.sendMessage({
+            let response = await sendRequestMessage({
                 message: "loginMessage",
                 data: {
                     username,
                     password: btoa(md5(password))
                 },
             });
+        console.log(response)
             if (response.error) {
                 let msg = response.error;
                 if (typeof response.error !== 'string') {
@@ -55,13 +56,13 @@ function registerListener() {
                 let data = response.data;
                 if (data.success) {
                     let accountInfo = btoa(JSON.stringify(data.data));
-                    await setChromeCache('account_info', accountInfo);
+                    await setLocalCache('account_info', accountInfo);
                     if (remember) {
                         let loginInfo = btoa(JSON.stringify({
                             username,
                             password
                         }));
-                        await setChromeCache('login_info', loginInfo);
+                        await setLocalCache('login_info', loginInfo);
                     }
                     window.location = 'popup.html';
                 } else {
