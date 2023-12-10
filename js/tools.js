@@ -110,8 +110,20 @@ async function getChromeLocalCache(key) {
     return chromeCache[key];
 }
 
+/**
+ * 判断运行在那个场景里面
+ * @returns {number} 【1谷歌扩展 2其他】
+ */
+function judgeWorkScene() {
+    if (chrome !== undefined && chrome.runtime && chrome.extension) {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
 async function getLocalCache(key) {
-    if (1 === WORK_SCENE) {
+    if (1 === judgeWorkScene()) {
         return await getChromeLocalCache(key);
     } else {
         return await getLocalStorageCache(key);
@@ -129,7 +141,7 @@ async function setChromeLocalCache(key, value) {
 }
 
 async function setLocalCache(key, value) {
-    if (1 === WORK_SCENE) {
+    if (1 === judgeWorkScene()) {
         await setChromeLocalCache(key, value);
     } else {
         await setLocalStorageCache(key, value);
@@ -327,26 +339,26 @@ async function sendChromeRuntimeMessage(request) {
 
 async function sendRequestMessage(request) {
     if (request.message === "chatRequestMessage") {
-        if (1 === WORK_SCENE) {
+        if (1 === judgeWorkScene()) {
             return await sendChromeRuntimeMessage(request);
         } else {
             return await sendChatRequestTool(request);
         }
     } else if (request.message === "logMessage") {
-        if (1 === WORK_SCENE) {
+        if (1 === judgeWorkScene()) {
             return await sendChromeRuntimeMessage(request);
         } else {
             console.log(request)
             return true;
         }
     } else if (request.message === 'loginVerifyMessage') {
-        if (1 === WORK_SCENE) {
+        if (1 === judgeWorkScene()) {
             return await sendChromeRuntimeMessage(request);
         } else {
             return await loginVerifyTool(request);
         }
     } else if (request.message === 'loginMessage') {
-        if (1 === WORK_SCENE) {
+        if (1 === judgeWorkScene()) {
             return await sendChromeRuntimeMessage(request);
         } else {
             return await loginTool(request);
