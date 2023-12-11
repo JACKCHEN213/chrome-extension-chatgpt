@@ -442,8 +442,8 @@ function initRefresh() {
 
 function init() {
     registerChatItem();
-    initAuth().then(() => {
-        initOldData().then();
+    initAuth().then(async () => {
+        await initOldData();
         registerListener();
         initRefresh();
     });
