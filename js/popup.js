@@ -158,18 +158,25 @@ async function chatRequest(storeSession, content) {
     }
 }
 
-async function sendMessage(liId = '', isInput = false) {
-    $('#chat-preview').remove();  // 移除当前存在的预览
-    let messageInputTag = $('#message-input');
-    let message = messageInputTag.val();
+function getCurrentInput() {
+    let message = $('#message-input').val();
     if (!message) {
-        return;
+        return '';
     }
-    let currentDatetime = getCurrentDatetimeStr();
-    message = message.replace(/&quot;/g, '"')
+    return message.replace(/&quot;/g, '"')
         .replace(/&#96;/g, '`')
         .replace(/&#36;/g, '$')
         .replace(/&lt;/g, '<');
+}
+
+async function sendMessage(liId = '', isInput = false) {
+    $('#chat-preview').remove();  // 移除当前存在的预览
+    let message = getCurrentInput();
+    if (!message) {
+        await setLocalCache('current-input', null);
+        return;
+    }
+    let currentDatetime = getCurrentDatetimeStr();
     appendMessage({
         message,
         datetime: currentDatetime,
@@ -179,11 +186,13 @@ async function sendMessage(liId = '', isInput = false) {
     });
     let chatContentTag = $('#chat-content');
     chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
+    await setLocalCache('current-input', message);
 
     if (isInput) {
         return;
     }
-    messageInputTag.val('');
+    $('#message-input').val('');
+    await setLocalCache('current-input', null);
 
     // 缓存
     let storeSession = await getStoreSession();
@@ -283,6 +292,16 @@ async function refreshChatContent() {
             });
         }
     }
+    let message = await getLocalCache('current-input');
+    if (message) {
+        appendMessage({
+            message,
+            datetime: getCurrentDatetimeStr(),
+            role: 'user',
+            isInput: true,
+            liId: 'chat-preview',
+        })
+    }
     $('b.topic-nums').html(topicList.length);
 }
 
@@ -310,6 +329,11 @@ async function initOldData() {
         modelListTag.append($(`<li><a class="dropdown-item" style="cursor: pointer;">${_model}</a></li>`));
     }
     await chooseModelByIndex(model);
+
+    let message = await getLocalCache('current-input');
+    if (message) {
+        $('#message-input').val(message);
+    }
 }
 
 function userInput() {
@@ -413,7 +437,7 @@ function initRefresh() {
             // await setChromeCache('refresh_flag', null);
             await refreshChatContent();
         }
-    }, 100);
+    }, 500);
 }
 
 function init() {

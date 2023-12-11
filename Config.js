@@ -5,6 +5,7 @@ const CHAT_LOG_URL = 'api/Message/add'
 const OPENAI_CHAT_URL = 'v1/chat/completions';
 
 const MODEL_LIST = [
+    'gpt-4-vision-preview',
     'gpt-4-1106-preview',
     'gpt-4-0613',
     'gpt-4-0314',
@@ -15,7 +16,7 @@ const MODEL_LIST = [
     'gpt-3.5-turbo-0613',
     'gpt-3.5-turbo',
 ];
-const DEFAULT_MODEL = 'gpt-4';
+const DEFAULT_MODEL = 'gpt-4-1106-preview';
 
 const ACCOUNT_INFO_STRUCTURE = {
     openai_proxy: '',

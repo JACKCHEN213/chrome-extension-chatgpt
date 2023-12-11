@@ -131,7 +131,11 @@ async function getLocalCache(key) {
 }
 
 async function setLocalStorageCache(key, value) {
-    window.localStorage.setItem(key, value);
+    if (null === value) {
+        window.localStorage.removeItem(key);
+    } else {
+        window.localStorage.setItem(key, value);
+    }
 }
 
 async function setChromeLocalCache(key, value) {
