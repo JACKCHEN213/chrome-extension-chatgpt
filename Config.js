@@ -5,7 +5,7 @@ const CHAT_LOG_URL = 'api/Message/add'
 const OPENAI_CHAT_URL = 'v1/chat/completions';
 
 const MODEL_LIST = [
-    'gpt-4-vision-preview',
+    // 'gpt-4-vision-preview',  // 视觉模型,先隐藏
     'gpt-4-1106-preview',
     'gpt-4-0613',
     'gpt-4-0314',

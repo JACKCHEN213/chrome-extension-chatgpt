@@ -154,7 +154,7 @@ async function chatRequest(storeSession, content) {
             body_height: '200px'
         });
     } else {
-        refreshChatContent();
+        refreshChatContent().then();
     }
 }
 
