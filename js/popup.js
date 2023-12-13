@@ -28,21 +28,14 @@ async function getStoreSession() {
      */
     let storeSession = await getLocalCache('store_session');
     if (!storeSession) {  // 初始化
+        let mask = MASKS[0];
         storeSession = {
             current_session: 0,
             session_list: [{
                 last_message: '',
-                model: DEFAULT_MODEL,
-                title: 'ChatGPT助手',
-                topic_list: [
-                    {
-                        content: '你好',
-                        role: 'system',  // assistant, user
-                        datetime: getCurrentDatetimeStr(),
-                        id: generateUUID(),
-                        isFinish: true,
-                    }
-                ]
+                model: mask.model,
+                title: mask.name,
+                topic_list: deepCloneObject(mask.context),
             }],
         }
         await setLocalCache('store_session', JSON.stringify(storeSession));
@@ -305,6 +298,52 @@ async function refreshChatContent() {
     $('b.topic-nums').html(topicList.length);
 }
 
+async function changeChatMask() {
+    let storeSession = await getStoreSession();
+    let changeIndex = parseInt($(this).data('index'));
+    if (storeSession.current_session === changeIndex) {
+        return;
+    }
+    storeSession.current_session = changeIndex;
+    await setLocalCache('store_session', JSON.stringify(storeSession));
+    refreshChatContent();
+    initChatMaskList();
+}
+
+async function removeChatMask(ev) {
+    ev.stopPropagation()
+    let liTag = $(this).parent();
+    let deleteIndex = parseInt(liTag.data('index'));
+    let storeSession = await getStoreSession();
+    if (deleteIndex < storeSession.current_session) {
+        storeSession.current_session--;
+    }
+    storeSession.session_list.splice(deleteIndex, 1);
+    await setLocalCache('store_session', JSON.stringify(storeSession));
+    $(this).parent().remove();
+}
+
+async function initChatMaskList() {
+    let storeSession = await getStoreSession();
+    let element = '';
+    for (const index in storeSession.session_list) {
+        let selected = 'class="dropdown-item"';
+        let closeBtn = `<button type="button" class="btn-close" aria-label="Close"></button>`;
+        if (parseInt(index) === storeSession.current_session) {
+            selected = 'class="dropdown-item active"';
+            closeBtn = '';
+        }
+        element += `<li data-index="${index}" ${selected} style="display: flex; justify-content: space-between">
+        ${storeSession.session_list[index].title}
+        ${closeBtn}
+        </li>`
+    }
+    $('#chat-mask-title').html(storeSession.session_list[storeSession.current_session].title);
+    $('#chat-mask-menu').html(element);
+    $('#chat-mask-menu li').unbind('click').on('click', changeChatMask);
+    $('#chat-mask-menu li .btn-close').unbind('click').on('click', removeChatMask);
+}
+
 async function initOldData() {
     marked.setOptions({
         highlight: function (code, language) {
@@ -312,6 +351,7 @@ async function initOldData() {
             return hljs.highlight(code, {language: validLanguage}).value;
         }
     });
+    initChatMaskList().then();
     refreshChatContent().then();
     let chatContentTag = $('#chat-content');
     chatContentTag.scrollTop(chatContentTag[0].scrollHeight); // 滚动到底部
@@ -376,8 +416,16 @@ function initModelSelect() {
     chooseModelByIndex($(this).find('a.dropdown-item').html().trim()).then();
 }
 
-function initClearCache() {
-    setLocalCache('store_session', null).then();
+async function initClearCache() {
+    let storeSession = await getStoreSession();
+    let currentSession = storeSession.session_list[storeSession.current_session];
+    for (let i = currentSession.length - 1; i >= 0; i--) {
+        if (!currentSession[i].isPreset) {
+            currentSession.splice(i, 1);
+        }
+    }
+    storeSession.session_list[storeSession.current_session] = currentSession;
+    setLocalCache('store_session', JSON.stringify(storeSession)).then();
     setLocalCache('refresh_flag', null).then();
     $('#chat-content ul').html('');
     refreshChatContent().then();
@@ -396,11 +444,23 @@ async function initShowCache() {
     if (loginInfo) {
         msg += 'login_info:' + jsonHighlight(JSON.parse(atob(loginInfo))) + '<br>';
     }
+    let title = `全部缓存 - <a id="copy-all-cache" style="display: inline-block; width: 86px"><i class="bi bi-copy"></i>&nbsp;<span>复制缓存</span></a>`;
     confirmEx({
-        title: '全部缓存',
+        title,
         message: msg,
         modal_size: 'modal-sm',
         body_height: '200px'
+    });
+    $('#copy-all-cache').on('click', function () {
+        let message = {
+            store_session: JSON.parse(storeSession),
+            account_info: JSON.parse(atob(accountInfo)),
+            login_info: JSON.parse(atob(loginInfo)),
+            refresh_flag: refreshFlag
+        };
+        navigator.clipboard.writeText(JSON.stringify(message)).then(() => {
+            messageEx('复制成功')
+        });
     });
 }
 
@@ -418,6 +478,66 @@ function registerChatItem() {
     });
 }
 
+async function addMask(maskIndex) {
+    let storeSession = await getStoreSession();
+    let mask = MASKS[maskIndex];
+    if (undefined === mask) {
+        messageEx('面具不存在', 'danger', 800);
+        return false;
+    }
+
+    // 判断面具是否已添加
+    for (const session of storeSession.session_list) {
+        if (session.title === mask.name) {
+            messageEx('面具已经添加了', 'danger', 800);
+            return false;
+        }
+    }
+
+    // 将面具添加到列表里面
+    storeSession.session_list.push({
+        last_message: '',
+        model: mask.model,
+        title: mask.name,
+        topic_list: deepCloneObject(mask.context),
+    });
+    storeSession.current_session = storeSession.session_list.length - 1;
+    await setLocalCache('store_session', JSON.stringify(storeSession));
+    refreshChatContent();
+    initChatMaskList();
+    return true;
+}
+
+function showSelectMaskModal() {
+    let element = `<div class="form-group">`;
+    element += `<label class="form-label">请选择面具</label>`;
+    element += `<select class="form-select" id="select-mask">`;
+    for (const index in MASKS) {
+        element += `<option value="${index}">${MASKS[index].name}</option>`
+    }
+    element += `</select>`;
+    element += `</div>`;
+    confirmEx({
+        title: '添加面具',
+        message: element,
+        modal_size: 'modal-sm',
+        body_height: '200px',
+        confirm: '添加',
+        callback: async result => {
+            if (!result) {
+                return true;
+            }
+            let maskIndex = parseInt($('#select-mask').val());
+            $('#confirmExBody').html(`<div class="spinner-border text-primary" role="status"></div>`);
+            result = await addMask(maskIndex);
+            if (result) {
+                return true;
+            }
+            return false;
+        }
+    });
+}
+
 function registerListener() {
     $(document).keydown(initKeydown);
     $('#message-input').on('input change', userInput);
@@ -428,6 +548,7 @@ function registerListener() {
     $('a#clear-cache-toggle').on('click', initClearCache);
     $('a#show-cache-toggle').on('click', initShowCache);
     registerChatItem();
+    $('#chat-mask-tips').on('click', showSelectMaskModal);
 }
 
 function initRefresh() {

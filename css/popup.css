@@ -15,10 +15,11 @@
 
 #chat-mask {
     text-decoration: none;
+    color: #000;
 }
 
 #chat-mask::after {
-    display: none;
+    /*display: none;*/
 }
 
 #chat-mask-title {
@@ -30,6 +31,7 @@
 #chat-mask-tips {
     font-size: 12px;
     color: green;
+    cursor: pointer;
 }
 
 #chat-mask-menu li {
@@ -92,7 +94,11 @@
     margin: 5px 2px;
 }
 
-#model-dropdown-toggle, #clear-cache-toggle, #show-cache-toggle, .copy-item {
+#model-dropdown-toggle,
+#clear-cache-toggle,
+#show-cache-toggle,
+.copy-item,
+#copy-all-cache {
     display: block;
     color: #303030;
     width: 33px;
@@ -259,4 +265,8 @@ span.null {
 
 span.key {
     color: #92278f;
+}
+
+.form-label {
+    font-weight: bold;
 }

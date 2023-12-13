@@ -35,12 +35,22 @@ function confirmEx(params) {
     modalElemet.modal('show');
 
     $("#confirmExCancel").click(() => {
-        modalElemet.modal('hide').remove();
-        params.callback !== undefined && params.callback(false);
+        if (params.callback !== undefined) {
+            if (params.callback(false)) {
+                modalElemet.modal('hide').remove();
+            }
+        } else {
+            modalElemet.modal('hide').remove();
+        }
     });
     $("#confirmExConfirm").click(() => {
-        modalElemet.modal('hide').remove();
-        params.callback !== undefined && params.callback(true);
+        if (params.callback !== undefined) {
+            if (params.callback(true)) {
+                modalElemet.modal('hide').remove();
+            }
+        } else {
+            modalElemet.modal('hide').remove();
+        }
     });
 }
 
@@ -53,6 +63,9 @@ function confirmEx(params) {
 function alertEx(msg, type = 'success') {
     if (typeof (msg) !== 'string') {
         msg = JSON.stringify(msg);
+    }
+    if (type === 'error') {
+        type = 'danger';
     }
     // 创建bootstrap的alert元素
     const divElement = $("<div></div>")
@@ -90,7 +103,7 @@ function alertEx(msg, type = 'success') {
  * @param timeout
  */
 function messageEx(msg, type = 'success', timeout = 1000) {
-    if (type == 'error') {
+    if (type === 'error') {
         type = 'danger';
     }
     const divElement = alertEx(msg, type); // 生成Alert消息框

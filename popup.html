@@ -18,6 +18,7 @@
     <script src="Config.js"></script>
     <script src="js/alert-ex.js"></script>
     <script src="js/tools.js"></script>
+    <script src="masks.js"></script>
     <title></title>
 </head>
 
@@ -29,14 +30,12 @@
                 <a class="dropdown-toggle" id="chat-mask"
                    data-bs-toggle="dropdown" href="#" role="button"
                    aria-expanded="false">
-                    <span id="chat-mask-title">ChatGPT助手</span>
-                    <span id="chat-mask-tips">(点击切换面具)</span>
+                    <span id="chat-mask-title"></span>
                 </a>
-                <ul id="chat-mask-menu" class="dropdown-menu" aria-labelledby="chat-mask">
-                    <li>ChatGPT助手</li>
-                </ul>
+                <ul id="chat-mask-menu" class="dropdown-menu" aria-labelledby="chat-mask"></ul>
             </div>
             <span class="text-black-50" id="chat-count">共<b class="topic-nums"></b>条聊天记录</span>
+            <span id="chat-mask-tips">(点击添加面具)</span>
         </div>
         <div id="user-avatar" class="dropdown">
             <a class="dropdown-toggle" id="avatar-dropdown-toggle"
