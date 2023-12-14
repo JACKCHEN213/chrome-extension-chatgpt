@@ -5,13 +5,13 @@
   "version": "1.0",
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "images/icon.png",
+    "default_icon": "images/icon-v.png",
     "default_title": "点击打开聊天页面"
   },
   "icons": {
-    "16": "images/icon.png",
-    "48": "images/icon.png",
-    "128": "images/icon.png"
+    "16": "images/icon-v.png",
+    "48": "images/icon-v.png",
+    "128": "images/icon-v.png"
   },
   "minimum_chrome_version": "88",
   "permissions": [

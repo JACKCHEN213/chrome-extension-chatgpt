@@ -49,7 +49,7 @@ async function getStoreSession() {
  * 添加消息
  */
 function appendMessage({message, datetime, role = 'user', liId = '', isInput = false}) {
-    let avatar = 'images/icon.png';
+    let avatar = 'images/icon-v.png';
     let isInputText = '';
     if (isInput) {
         isInputText = `<div class="${role === 'user' ? 'role-user' : 'role-gpt'}">
@@ -92,7 +92,7 @@ function appendMessage({message, datetime, role = 'user', liId = '', isInput = f
 function setLoading() {
     let element = $(`<li class="chat-item">
       <div class="role-gpt">
-        <img class="avatar-24" src="images/icon.png" alt="avatar">
+        <img class="avatar-24" src="images/icon-v.png" alt="avatar">
       </div>
       <div class="role-gpt">
         <span style="font-size: 12px; color: #999">正在输入....</span>
