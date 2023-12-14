@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT助手",
-  "description": "ChatGPT助手",
+  "description": "github仓库地址: https://github.com/JACKCHEN213/chrome-extension-chatgpt，欢迎来点✨",
   "version": "1.0",
   "action": {
     "default_popup": "popup.html",
