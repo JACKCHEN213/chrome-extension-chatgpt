@@ -15,8 +15,6 @@
   },
   "minimum_chrome_version": "88",
   "permissions": [
-    "contextMenus",
-    "activeTab",
     "storage"
   ],
   "background": {
