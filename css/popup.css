@@ -121,6 +121,10 @@
     transition-duration: 0.5s;
 }
 
+#copy-all-cache, #copy-all-cache span {
+    cursor: pointer;
+}
+
 #model-dropdown-toggle:hover {
     width: 76px;
 }

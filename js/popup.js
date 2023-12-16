@@ -20,6 +20,7 @@ async function getStoreSession() {
      *                     datetime: 发送的日期时间(Y-m-d H:i:s, 2012-07-12 11:35:42)
      *                     id: 唯一的id,
      *                     isFinish: 是否结束
+     *                     isPreset: 是否预设
      *                 }
      *             ]
      *         }
@@ -195,6 +196,7 @@ async function sendMessage(liId = '', isInput = false) {
         datetime: currentDatetime,
         id: generateUUID(),
         isFinish: true,
+        isPreset: false,
     });
     storeSession.session_list[storeSession.current_session].topic_list.push({
         content: '',
@@ -202,6 +204,7 @@ async function sendMessage(liId = '', isInput = false) {
         datetime: currentDatetime,
         id: generateUUID(),
         isFinish: false,
+        isPreset: false,
     });
     storeSession.session_list[storeSession.current_session].last_message = message;
     $('b.topic-nums').html(storeSession.session_list[storeSession.current_session].topic_list.length);
@@ -419,9 +422,9 @@ function initModelSelect() {
 async function initClearCache() {
     let storeSession = await getStoreSession();
     let currentSession = storeSession.session_list[storeSession.current_session];
-    for (let i = currentSession.length - 1; i >= 0; i--) {
-        if (!currentSession[i].isPreset) {
-            currentSession.splice(i, 1);
+    for (let i = currentSession.topic_list.length - 1; i >= 0; i--) {
+        if (!currentSession.topic_list[i].isPreset) {
+            currentSession.topic_list.splice(i, 1);
         }
     }
     storeSession.session_list[storeSession.current_session] = currentSession;

@@ -261,6 +261,7 @@ async function sendChatRequestTool(request, sendResponse = null) {
         }
     } catch (error) {
         if (sendResponse) {
+            console.error(error);
             sendResponse({error});
         } else {
             return {error};
@@ -299,6 +300,7 @@ async function loginVerifyTool(request, sendResponse = null) {
         }
     } catch (error) {
         if (sendResponse) {
+            console.error(error);
             sendResponse({error});
         } else {
             return {error};
@@ -330,6 +332,7 @@ async function loginTool(request, sendResponse = null) {
         }
     } catch (error) {
         if (sendResponse) {
+            console.error(error);
             sendResponse({error});
         } else {
             return {error};
