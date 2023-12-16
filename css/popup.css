@@ -235,6 +235,10 @@ li.choose-model {
     background-color: #e7f8ff;
 }
 
+.chat-display-message p {
+    margin-bottom: 0;
+}
+
 .chat-display-placeholder {
     height: 1px;
     width: 10%;
