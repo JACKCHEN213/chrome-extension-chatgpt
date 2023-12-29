@@ -35,4 +35,8 @@ A ChatGPT plugin based on Chrome v3 extension
 > 3. You need to provide an openai ChatGPT development key
 > 
 > **Of course, everything is a small problem, you can do secondary development!**
-> 
+>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=JACKCHEN213/chrome-extension-chatgpt&type=Date)](https://star-history.com/#JACKCHEN213/chrome-extension-chatgpt&Date)
